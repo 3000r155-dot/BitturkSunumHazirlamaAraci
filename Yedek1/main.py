@@ -1,0 +1,665 @@
+import customtkinter as ctk
+from tkinter import messagebox, filedialog
+import json
+import re
+
+import ayarlar
+import tasarim_elemanlari
+import sablon_motoru
+
+class BiTTuRKMuadiliApp(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+
+        # Pencere Başlığı
+        self.title("BiTTuRK.NeT Sunum Hazırlama Aracı - Python Muadili v7.5")
+        
+        # --- TÜM BUTONLARIN TAŞMADAN SIĞDIĞI İDEAL AÇILIŞ BOYUTU ---
+        pencere_genislik = 1260
+        pencere_yukseklik = 880
+        
+        ekran_genislik = self.winfo_screenwidth()
+        ekran_yukseklik = self.winfo_screenheight()
+        
+        merkez_x = int((ekran_genislik / 2) - (pencere_genislik / 2))
+        merkez_y = int((ekran_yukseklik / 2) - (pencere_yukseklik / 2))
+        
+        self.geometry(f"{pencere_genislik}x{pencere_yukseklik}+{merkez_x}+{merkez_y}")
+        self.resizable(True, True)
+
+        # Üst Panel Layout düzeni
+        self.ust_panel = ctk.CTkFrame(self, fg_color="transparent")
+        self.ust_panel.pack(pady=10, fill="x")
+
+        self.lbl_ust_baslik = ctk.CTkLabel(
+            self.ust_panel, text="BiTTuRK.NeT SUNUM HAZIRLAMA PANELİ", 
+            font=ctk.CTkFont(size=18, weight="bold")
+        )
+        self.lbl_ust_baslik.pack(side="left", expand=True, padx=(60, 0))
+
+        self.btn_tema_degistir = ctk.CTkButton(
+            self.ust_panel, text="🌙 Karanlık", width=70, height=32,
+            font=ctk.CTkFont(size=11, weight="bold"),
+            command=self.gorunum_modu_tetikle
+        )
+        self.btn_tema_degistir.pack(side="right", padx=25)
+
+        self.tab_control = ctk.CTkTabview(self, width=1220, height=800)
+        self.tab_control.pack(padx=20, pady=10, fill="both", expand=True)
+
+        self.tab_film = self.tab_control.add("🎬 FİLM")
+        self.tab_dizi = self.tab_control.add("📺 DİZİ")
+        self.tab_muzik = self.tab_control.add("🎵 MÜZİK")
+        self.tab_oyun = self.tab_control.add("🎮 OYUN")
+        self.tab_diger = self.tab_control.add("📦 DİĞER")
+        self.tab_vip = self.tab_control.add("⭐ V.I.P")
+
+        self.tasarla_film_sekmesi()
+        self.tasarla_dizi_sekmesi()
+        self.tasarla_muzik_sekmesi()
+        self.tasarla_oyun_sekmesi()
+        self.tasarla_diger_sekmesi()
+        self.tasarla_vip_sekmesi()
+
+    def gorunum_modu_tetikle(self):
+        gecerli_mod = ctk.get_appearance_mode()
+        if gecerli_mod == "Dark":
+            ctk.set_appearance_mode("Light")
+            self.btn_tema_degistir.configure(text="☀️ Aydınlık")
+        else:
+            ctk.set_appearance_mode("Dark")
+            self.btn_tema_degistir.configure(text="🌙 Karanlık")
+
+    def bbcode_renklendir(self, txt_widget):
+        txt_widget._textbox.tag_remove("serit_resim", "1.0", "end")
+        txt_widget._textbox.tag_remove("dil_resim", "1.0", "end")
+        icerik = txt_widget.get("1.0", "end-1c")
+        
+        for p in ayarlar.DIL_PATTERNLER:
+            for match in re.finditer(p, icerik):
+                txt_widget._textbox.tag_add("dil_resim", f"1.0 + {match.start()} chars", f"1.0 + {match.end()} chars")
+
+        for p in ayarlar.SERIT_PATTERNLER:
+            for match in re.finditer(p, icerik):
+                txt_widget._textbox.tag_add("serit_resim", f"1.0 + {match.start()} chars", f"1.0 + {match.end()} chars")
+    def tasarla_film_sekmesi(self):
+        sol, sag_txt, sag_frame = tasarim_elemanlari.create_layout_structure(self.tab_film)
+
+        ornek_ad = "Bicak Sirti 2017 TR BRRip x264 AC"
+        ornek_afis = "https://ibb.co/****"
+        ornek_detay = "https://ibb.co/****"
+        ornek_oyuncu = "https://ibb.co/****"
+        ornek_konu = "Blade Runner 2049 : Bıçak Sırtı filminde, 1982 yılında gösterime giren \"Bıçak Sırtı\"nın macerası 30 yıl sonra kaldığı yerden devam ediyor. İlk filmin olaylarından otuz yıl sonra, Los Angeles Polis Teşkilatı'nın yeni bir Blade Runner'ı olan Memur K, toplumdan geriye kalanı kaosa sürükleme potansiyeline"
+        ornek_fragman = "https://youtube.com/****"
+        ornek_info = "Biçim : Matroska Biçim sürümü : Version 4 / Version 2 Dosya boyutu : 1,68 GiB Süre : 2 s 43dk Kapsamlı bit oranı : 1 473 kb/s Film adı : www.bitturk.net | BTRG Görüntü ID : 1 Biçim : MPEG-4 Visual Biçim profili : Advanced Simple@L5 Biçim ayarları : BVOP:2 Biçim ayarları, BVOP : 2 Biçim ayarları, QPel"
+
+        ent_ad = tasarim_elemanlari.ekle_girdi(sol, "Film Adı", ornek=ornek_ad, update_callback=lambda: film_bbcode_uret())
+        ent_afis = tasarim_elemanlari.ekle_girdi(sol, "Afiş (Resim Linki)", has_upload=True, ornek=ornek_afis, update_callback=lambda: film_bbcode_uret())
+        ent_detay = tasarim_elemanlari.ekle_girdi(sol, "Detay (Resim Linki)", has_upload=True, ornek=ornek_detay, update_callback=lambda: film_bbcode_uret())
+        ent_oyuncu = tasarim_elemanlari.ekle_girdi(sol, "Oyuncular (Resim Linki)", has_upload=True, ornek=ornek_oyuncu, update_callback=lambda: film_bbcode_uret())
+        txt_konu = tasarim_elemanlari.ekle_girdi(sol, "Konu", is_textbox=True, height=75, ornek=ornek_konu, update_callback=lambda: film_bbcode_uret())
+        ent_fragman = tasarim_elemanlari.ekle_girdi(sol, "Fragman (Youtube Linki)", ornek=ornek_fragman, update_callback=lambda: film_bbcode_uret())
+        txt_info = tasarim_elemanlari.ekle_girdi(sol, "info", is_textbox=True, height=100, ornek=ornek_info, update_callback=lambda: film_bbcode_uret())
+
+        vars = tasarim_elemanlari.ekle_medya_onay_kutulari(sol, update_callback=lambda: film_bbcode_uret())
+
+        def text_placeholder_ayarla(textbox_obj, varsayilan_metin):
+            textbox_obj.insert("1.0", varsayilan_metin)
+            textbox_obj.configure(text_color="gray")
+            
+            def odak_giris(event):
+                if textbox_obj.get("1.0", "end-1c").strip() == varsayilan_metin:
+                    textbox_obj.delete("1.0", "end")
+                    textbox_obj.configure(text_color=["#000000", "#FFFFFF"])
+                    
+            def odak_cikis(event):
+                if not textbox_obj.get("1.0", "end-1c").strip():
+                    textbox_obj.insert("1.0", varsayilan_metin)
+                    textbox_obj.configure(text_color="gray")
+                    
+            textbox_obj.bind("<FocusIn>", odak_giris)
+            textbox_obj.bind("<FocusOut>", odak_cikis)
+
+        text_placeholder_ayarla(txt_konu, ornek_konu)
+        text_placeholder_ayarla(txt_info, ornek_info)
+
+        def film_bbcode_uret():
+            guncel_konu = txt_konu.get('1.0', 'end-1c')
+            guncel_info = txt_info.get('1.0', 'end-1c')
+            
+            ham_konu = "" if guncel_konu.strip() == ornek_konu.strip() else guncel_konu
+            ham_info = "" if guncel_info.strip() == ornek_info.strip() else guncel_info
+
+            if not ent_ad.get().strip() and not ent_afis.get().strip() and not ent_detay.get().strip() and not ent_oyuncu.get().strip() and not ham_konu.strip() and not ent_fragman.get().strip() and not ham_info.strip():
+                sag_txt.delete("1.0", "end")
+                return
+
+            veri_paketi = {
+                "ad": ent_ad.get(), "afis": ent_afis.get(), "detay": ent_detay.get(),
+                "oyuncu": ent_oyuncu.get(), "konu": ham_konu, "fragman": ent_fragman.get(), "info": ham_info
+            }
+            medya_secenekleri = {k: v.get() for k, v in vars.items()}
+
+            # Tüm eski string birleştirme ve manuel resim linkleri temizlendi, motora bağlandı
+            bbcode = sablon_motoru.film_sablonu(veri_paketi, medya_secenekleri)
+            
+            sag_txt.delete("1.0", "end")
+            sag_txt.insert("1.0", bbcode)
+            sag_txt._textbox.tag_add("center", "1.0", "end")
+            self.bbcode_renklendir(sag_txt)
+
+        def temizle_film():
+            ent_ad.delete(0, 'end'); ent_afis.delete(0, 'end'); ent_detay.delete(0, 'end'); ent_oyuncu.delete(0, 'end')
+            txt_konu.delete('1.0', 'end'); ent_fragman.delete(0, 'end'); txt_info.delete('1.0', 'end')
+            for v in vars.values(): v.set("Hayır")
+            sag_txt.delete("1.0", "end")
+            txt_konu.insert("1.0", ornek_konu); txt_konu.configure(text_color="gray")
+            txt_info.insert("1.0", ornek_info); txt_info.configure(text_color="gray")
+
+        def kaydet_film():
+            dosya_yolu = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Metin Dosyası", "*.txt")])
+            if dosya_yolu:
+                data = {
+                    "ad": ent_ad.get(), "afis": ent_afis.get(), "detay": ent_detay.get(), "oyuncu": ent_oyuncu.get(),
+                    "konu": "" if txt_konu.get('1.0', 'end-1c') == ornek_konu else txt_konu.get('1.0', 'end-1c'),
+                    "fragman": ent_fragman.get(),
+                    "info": "" if txt_info.get('1.0', 'end-1c') == ornek_info else txt_info.get('1.0', 'end-1c'),
+                    "chk": {k: v.get() for k, v in vars.items()}
+                }
+                with open(dosya_yolu, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False, indent=4)
+                messagebox.showinfo("Başarı", "Taslak başarıyla kaydedildi!")
+
+        def yukle_film():
+            dosya_yolu = filedialog.askopenfilename(filetypes=[("Metin Dosyası", "*.txt")])
+            if dosya_yolu:
+                try:
+                    with open(dosya_yolu, "r", encoding="utf-8") as f: data = json.load(f)
+                    temizle_film()
+                    ent_ad.insert(0, data["ad"]); ent_afis.insert(0, data["afis"]); ent_detay.insert(0, data["detay"]); ent_oyuncu.insert(0, data["oyuncu"])
+                    if data["konu"].strip():
+                        txt_konu.delete('1.0', 'end')
+                        txt_konu.insert("1.0", data["konu"])
+                        txt_konu.configure(text_color=["#000000", "#FFFFFF"])
+                    if data["info"].strip():
+                        txt_info.delete('1.0', 'end')
+                        txt_info.insert("1.0", data["info"])
+                        txt_info.configure(text_color=["#000000", "#FFFFFF"])
+                    for k, v in data["chk"].items(): vars[k].set(v)
+                    film_bbcode_uret()
+                except Exception: messagebox.showerror("Hata", "Geçersiz taslak dosyası!")
+
+        tasarim_elemanlari.ekle_alt_butonlar(self, sag_frame, sag_txt, temizle_film, kaydet_film, yukle_film)
+    def tasarla_dizi_sekmesi(self):
+        sol, sag_txt, sag_frame = tasarim_elemanlari.create_layout_structure(self.tab_dizi)
+
+        ornek_ad = "The Flash S05E07 HDTV x264-SVA"
+        ornek_afis = "https://ibb.co"
+        ornek_detay = "https://ibb.co"
+        ornek_oyuncu = "https://ibb.co"
+        ornek_konu = "Geçmişinde büyük bir trajedi yaşamış Barry Allen, Central City Polis Birimi'nde çalışan ve suçluların arkalarında bıraktıkları ipuçlarını toplayan bir adli laboratuvar asistanıdır. Talihsiz bir yıldırım kazası yaşamasının ardından süper hız gücüne sahip olan Barry, Flash kimliğine bürünür ve kötü adamları"
+        ornek_fragman = "https://youtu.be"
+        ornek_info = "General Information Duration : 00:41:46 Release size : 302 MB Video Bitrate : 1 407 Kbps Frame rate : 23.976 Fps MP3 2ch CBR : 128kbps Video resolution : 640x360 (16:9) Extra infos Format : MKV (Audio Video Interleaved) Encoder : Lavf57.81.100"
+
+        ent_ad = tasarim_elemanlari.ekle_girdi(sol, "Dizi Adı", ornek=ornek_ad, update_callback=lambda: dizi_bbcode_uret())
+        ent_afis = tasarim_elemanlari.ekle_girdi(sol, "Afiş (Resim Linki)", has_upload=True, ornek=ornek_afis, update_callback=lambda: dizi_bbcode_uret())
+        ent_detay = tasarim_elemanlari.ekle_girdi(sol, "Detay (Resim Linki)", has_upload=True, ornek=ornek_detay, update_callback=lambda: dizi_bbcode_uret())
+        ent_oyuncu = tasarim_elemanlari.ekle_girdi(sol, "Oyuncular (Resim Linki)", has_upload=True, ornek=ornek_oyuncu, update_callback=lambda: dizi_bbcode_uret())
+        txt_konu = tasarim_elemanlari.ekle_girdi(sol, "Konu", is_textbox=True, height=75, ornek=ornek_konu, update_callback=lambda: dizi_bbcode_uret())
+        ent_fragman = tasarim_elemanlari.ekle_girdi(sol, "Fragman (Youtube Linki)", ornek=ornek_fragman, update_callback=lambda: dizi_bbcode_uret())
+        txt_info = tasarim_elemanlari.ekle_girdi(sol, "NFO / Info", is_textbox=True, height=100, ornek=ornek_info, update_callback=lambda: dizi_bbcode_uret())
+
+        vars = tasarim_elemanlari.ekle_medya_onay_kutulari(sol, update_callback=lambda: dizi_bbcode_uret())
+
+        def text_placeholder_ayarla(textbox_obj, varsayilan_metin):
+            textbox_obj.insert("1.0", varsayilan_metin)
+            textbox_obj.configure(text_color="gray")
+            
+            def odak_giris(event):
+                if textbox_obj.get("1.0", "end-1c").strip() == varsayilan_metin:
+                    textbox_obj.delete("1.0", "end")
+                    textbox_obj.configure(text_color=["#000000", "#FFFFFF"])
+                    
+            def odak_cikis(event):
+                if not textbox_obj.get("1.0", "end-1c").strip():
+                    textbox_obj.insert("1.0", varsayilan_metin)
+                    textbox_obj.configure(text_color="gray")
+                    
+            textbox_obj.bind("<FocusIn>", odak_giris)
+            textbox_obj.bind("<FocusOut>", odak_cikis)
+
+        text_placeholder_ayarla(txt_konu, ornek_konu)
+        text_placeholder_ayarla(txt_info, ornek_info)
+
+        def dizi_bbcode_uret():
+            guncel_konu = txt_konu.get('1.0', 'end-1c')
+            guncel_info = txt_info.get('1.0', 'end-1c')
+            
+            ham_konu = "" if guncel_konu.strip() == ornek_konu.strip() else guncel_konu
+            ham_info = "" if guncel_info.strip() == ornek_info.strip() else guncel_info
+
+            if not ent_ad.get().strip() and not ent_afis.get().strip() and not ent_detay.get().strip() and not ent_oyuncu.get().strip() and not ham_konu.strip() and not ent_fragman.get().strip() and not ham_info.strip():
+                sag_txt.delete("1.0", "end")
+                return
+
+            veri_paketi = {
+                "ad": ent_ad.get(), "afis": ent_afis.get(), "detay": ent_detay.get(),
+                "oyuncu": ent_oyuncu.get(), "konu": ham_konu, "fragman": ent_fragman.get(), "info": ham_info
+            }
+            medya_secenekleri = {k: v.get() for k, v in vars.items()}
+
+            # Manuel string üretimi ve sabit resim linkleri kaldırıldı, motora bağlandı
+            bbcode = sablon_motoru.dizi_sablonu(veri_paketi, medya_secenekleri)
+            
+            sag_txt.delete("1.0", "end")
+            sag_txt.insert("1.0", bbcode)
+            sag_txt._textbox.tag_add("center", "1.0", "end")
+            self.bbcode_renklendir(sag_txt)
+
+        def temizle_dizi():
+            ent_ad.delete(0, 'end'); ent_afis.delete(0, 'end'); ent_detay.delete(0, 'end'); ent_oyuncu.delete(0, 'end')
+            txt_konu.delete('1.0', 'end'); ent_fragman.delete(0, 'end'); txt_info.delete('1.0', 'end')
+            for v in vars.values(): v.set("Hayır")
+            sag_txt.delete("1.0", "end")
+            txt_konu.insert("1.0", ornek_konu); txt_konu.configure(text_color="gray")
+            txt_info.insert("1.0", ornek_info); txt_info.configure(text_color="gray")
+
+        def kaydet_dizi():
+            dosya_yolu = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Metin Dosyası", "*.txt")])
+            if dosya_yolu:
+                data = {
+                    "ad": ent_ad.get(), "afis": ent_afis.get(), "detay": ent_detay.get(), "oyuncu": ent_oyuncu.get(),
+                    "konu": "" if txt_konu.get('1.0', 'end-1c') == ornek_konu else txt_konu.get('1.0', 'end-1c'),
+                    "fragman": ent_fragman.get(),
+                    "info": "" if txt_info.get('1.0', 'end-1c') == ornek_info else txt_info.get('1.0', 'end-1c'),
+                    "chk": {k: v.get() for k, v in vars.items()}
+                }
+                with open(dosya_yolu, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False, indent=4)
+                messagebox.showinfo("Başarı", "Taslak başarıyla kaydedildi!")
+
+        def yukle_dizi():
+            dosya_yolu = filedialog.askopenfilename(filetypes=[("Metin Dosyası", "*.txt")])
+            if dosya_yolu:
+                try:
+                    with open(dosya_yolu, "r", encoding="utf-8") as f: data = json.load(f)
+                    temizle_dizi()
+                    ent_ad.insert(0, data["ad"]); ent_afis.insert(0, data["afis"]); ent_detay.insert(0, data["detay"]); ent_oyuncu.insert(0, data["oyuncu"])
+                    if data["konu"].strip():
+                        txt_konu.delete('1.0', 'end')
+                        txt_konu.insert("1.0", data["konu"])
+                        txt_konu.configure(text_color=["#000000", "#FFFFFF"])
+                    if data["info"].strip():
+                        txt_info.delete('1.0', 'end')
+                        txt_info.insert("1.0", data["info"])
+                        txt_info.configure(text_color=["#000000", "#FFFFFF"])
+                    for k, v in data["chk"].items(): vars[k].set(v)
+                    dizi_bbcode_uret()
+                except Exception: messagebox.showerror("Hata", "Geçersiz taslak dosyası!")
+
+        tasarim_elemanlari.ekle_alt_butonlar(self, sag_frame, sag_txt, temizle_dizi, kaydet_dizi, yukle_dizi)
+    def tasarla_muzik_sekmesi(self):
+        sol, sag_txt, sag_frame = tasarim_elemanlari.create_layout_structure(self.tab_muzik)
+
+        ornek_album = "Toygar Isikli - Babil Original Soundtrack"
+        ornek_afis = "https://ibb.co"
+        ornek_detay = "Audio #0 : MPEG Audio at 320 kb/s Infos : 2 kanal, 44.1 kHz"
+        ornek_parca = "01.Toygar Işıklı - Babil Main Title\n02.Toygar Işıklı - Money Talk_İrfan\n03.Toygar Işıklı - The Choice\n04.Toygar Işıklı - Now It's The Time\n05.Toygar Işıklı - Nobody Loves Me_Egemen\n06.Toygar Işıklı - Thank You God\n07.Toygar Işıklı - The Beginning\n08.Toygar Işıklı - Out Of Breath\n09.Toygar Işıklı - My Son (Piano & Flute)"
+
+        ent_album = tasarim_elemanlari.ekle_girdi(sol, "Albüm Adı", ornek=ornek_album, update_callback=lambda: muzik_bbcode_uret())
+        ent_afis = tasarim_elemanlari.ekle_girdi(sol, "Afiş (Resim Linki)", has_upload=True, ornek=ornek_afis, update_callback=lambda: muzik_bbcode_uret())
+        txt_detay = tasarim_elemanlari.ekle_girdi(sol, "Detay", is_textbox=True, height=100, ornek=ornek_detay, update_callback=lambda: muzik_bbcode_uret())
+        txt_parca = tasarim_elemanlari.ekle_girdi(sol, "Parça Listesi", is_textbox=True, height=150, ornek=ornek_parca, update_callback=lambda: muzik_bbcode_uret())
+
+        def text_placeholder_ayarla(textbox_obj, varsayilan_metin):
+            textbox_obj.insert("1.0", varsayilan_metin)
+            textbox_obj.configure(text_color="gray")
+            
+            def odak_giris(event):
+                if textbox_obj.get("1.0", "end-1c").strip() == varsayilan_metin.strip():
+                    textbox_obj.delete("1.0", "end")
+                    textbox_obj.configure(text_color=["#000000", "#FFFFFF"])
+                    
+            def odak_cikis(event):
+                if not textbox_obj.get("1.0", "end-1c").strip():
+                    textbox_obj.insert("1.0", varsayilan_metin)
+                    textbox_obj.configure(text_color="gray")
+                    
+            textbox_obj.bind("<FocusIn>", odak_giris)
+            textbox_obj.bind("<FocusOut>", odak_cikis)
+
+        text_placeholder_ayarla(txt_detay, ornek_detay)
+        text_placeholder_ayarla(txt_parca, ornek_parca)
+
+        def muzik_bbcode_uret():
+            guncel_detay = txt_detay.get('1.0', 'end-1c')
+            guncel_parca = txt_parca.get('1.0', 'end-1c')
+            
+            ham_detay = "" if guncel_detay.strip() == ornek_detay.strip() else guncel_detay
+            ham_parca = "" if guncel_parca.strip() == ornek_parca.strip() else guncel_parca
+
+            if not ent_album.get().strip() and not ent_afis.get().strip() and not ham_detay.strip() and not ham_parca.strip():
+                sag_txt.delete("1.0", "end")
+                return
+                
+            veri_paketi = {
+                "album": ent_album.get(),
+                "afis": ent_afis.get(),
+                "detay": ham_detay,
+                "parca": ham_parca
+            }
+
+            bbcode = sablon_motoru.muzik_sablonu(veri_paketi)
+            
+            sag_txt.delete("1.0", "end")
+            sag_txt.insert("1.0", bbcode)
+            sag_txt._textbox.tag_add("center", "1.0", "end")
+            self.bbcode_renklendir(sag_txt)
+
+        def temizle_muzik():
+            ent_album.delete(0, 'end'); ent_afis.delete(0, 'end'); txt_detay.delete('1.0', 'end'); txt_parca.delete('1.0', 'end')
+            sag_txt.delete("1.0", "end")
+            txt_detay.insert("1.0", ornek_detay); txt_detay.configure(text_color="gray")
+            txt_parca.insert("1.0", ornek_parca); txt_parca.configure(text_color="gray")
+
+        def kaydet_muzik():
+            dosya_yolu = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Metin Dosyası", "*.txt")])
+            if dosya_yolu:
+                data = {
+                    "album": ent_album.get(), "afis": ent_afis.get(), 
+                    "detay": "" if txt_detay.get('1.0', 'end-1c') == ornek_detay else txt_detay.get('1.0', 'end-1c'), 
+                    "parca": "" if txt_parca.get('1.0', 'end-1c') == ornek_parca else txt_parca.get('1.0', 'end-1c')
+                }
+                with open(dosya_yolu, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False, indent=4)
+                messagebox.showinfo("Başarı", "Taslak kaydedildi!")
+
+        def yukle_muzik():
+            dosya_yolu = filedialog.askopenfilename(filetypes=[("Metin Dosyası", "*.txt")])
+            if dosya_yolu:
+                try:
+                    with open(dosya_yolu, "r", encoding="utf-8") as f: data = json.load(f)
+                    temizle_muzik()
+                    ent_album.insert(0, data["album"]); ent_afis.insert(0, data["afis"])
+                    if data["detay"].strip():
+                        txt_detay.delete('1.0', 'end')
+                        txt_detay.insert("1.0", data["detay"])
+                        txt_detay.configure(text_color=["#000000", "#FFFFFF"])
+                    if data["parca"].strip():
+                        txt_parca.delete('1.0', 'end')
+                        txt_parca.insert("1.0", data["parca"])
+                        txt_parca.configure(text_color=["#000000", "#FFFFFF"])
+                    muzik_bbcode_uret()
+                except Exception: messagebox.showerror("Hata", "Geçersiz dosya!")
+
+        tasarim_elemanlari.ekle_alt_butonlar(self, sag_frame, sag_txt, temizle_muzik, kaydet_muzik, yukle_muzik)
+    def tasarla_oyun_sekmesi(self):
+        sol, sag_txt, sag_frame = tasarim_elemanlari.create_layout_structure(self.tab_oyun)
+
+        ornek_ad = "Narcos: Rise of the Cartels"
+        ornek_afis = "https://ibb.co"
+        ornek_tanitim = "80'lerin Kolombiya'sına hoş geldiniz. El Patrón'un imparatorluğunun ateşi çoktan yakıldı, etkisi sınırları aştı ve hızla büyüyor. Her yere nüfuz ve yozlaşma hakim; polisler, muhafızlar, politikacılar ve diğer herkes Medellín Kartelinin avucunun içinde ve Amerika en"
+        ornek_fragman = "https://youtu.be"
+        ornek_sistem = "MİNİMUM: İşletim Sistemi: Windows 7, 8, 8.1, 10 x64 İşlemci: Intel Core i3-2100 (2 * 3100) OR AMD Athlon II X4 645 AM3 (4 * 3100) OR equivalent Bellek: 4 GB RAM Ekran Kartı: NVIDIA GeForce GTX 550 Ti (1024 MB) OR AMD Radeon HD 6850 (1024 MB) Depolama: 12 GB"
+        ornek_info = "-Iso dosyasından normal kurulum yapın. -CODEX dizininden crackli dosyaları oyunu kurduğunuz dizine kopyalayın. -Oyunun exe dosyasını firewall ile internete erişmesini engelleyin. -Eğer sisteminiz kurulu olduğu dizine kurduysanız oyunu, oyunu çalıştırmak için Yönetici olarak çalışmanız gerekebilir"
+
+        ent_ad = tasarim_elemanlari.ekle_girdi(sol, "Oyun Adı", ornek=ornek_ad, update_callback=lambda: oyun_bbcode_uret())
+        ent_afis = tasarim_elemanlari.ekle_girdi(sol, "Afiş (Resim Linki)", has_upload=True, ornek=ornek_afis, update_callback=lambda: oyun_bbcode_uret())
+        txt_tanitim = tasarim_elemanlari.ekle_girdi(sol, "Tanıtım", is_textbox=True, height=80, ornek=ornek_tanitim, update_callback=lambda: oyun_bbcode_uret())
+        ent_fragman = tasarim_elemanlari.ekle_girdi(sol, "Fragman (Youtube Linki)", ornek=ornek_fragman, update_callback=lambda: oyun_bbcode_uret())
+        txt_sistem = tasarim_elemanlari.ekle_girdi(sol, "Minumum Sistem", is_textbox=True, height=100, ornek=ornek_sistem, update_callback=lambda: oyun_bbcode_uret())
+        txt_info = tasarim_elemanlari.ekle_girdi(sol, "NFO / info", is_textbox=True, height=80, ornek=ornek_info, update_callback=lambda: oyun_bbcode_uret())
+
+        def text_placeholder_ayarla(textbox_obj, varsayilan_metin):
+            textbox_obj.insert("1.0", varsayilan_metin)
+            textbox_obj.configure(text_color="gray")
+            
+            def odak_giris(event):
+                if textbox_obj.get("1.0", "end-1c").strip() == varsayilan_metin.strip():
+                    textbox_obj.delete("1.0", "end")
+                    textbox_obj.configure(text_color=["#000000", "#FFFFFF"])
+                    
+            def odak_cikis(event):
+                if not textbox_obj.get("1.0", "end-1c").strip():
+                    textbox_obj.insert("1.0", varsayilan_metin)
+                    textbox_obj.configure(text_color="gray")
+                    
+            textbox_obj.bind("<FocusIn>", odak_giris)
+            textbox_obj.bind("<FocusOut>", odak_cikis)
+
+        text_placeholder_ayarla(txt_tanitim, ornek_tanitim)
+        text_placeholder_ayarla(txt_sistem, ornek_sistem)
+        text_placeholder_ayarla(txt_info, ornek_info)
+
+        def oyun_bbcode_uret():
+            guncel_tanitim = txt_tanitim.get('1.0', 'end-1c')
+            guncel_sistem = txt_sistem.get('1.0', 'end-1c')
+            guncel_info = txt_info.get('1.0', 'end-1c')
+            
+            ham_tanitim = "" if guncel_tanitim.strip() == ornek_tanitim.strip() else guncel_tanitim
+            ham_sistem = "" if guncel_sistem.strip() == ornek_sistem.strip() else guncel_sistem
+            ham_info = "" if guncel_info.strip() == ornek_info.strip() else guncel_info
+
+            if not ent_ad.get().strip() and not ent_afis.get().strip() and not ham_tanitim.strip() and not ent_fragman.get().strip() and not ham_sistem.strip() and not ham_info.strip():
+                sag_txt.delete("1.0", "end")
+                return
+
+            veri_paketi = {
+                "ad": ent_ad.get(), "afis": ent_afis.get(), "tanitim": ham_tanitim,
+                "fragman": ent_fragman.get(), "sistem": ham_sistem, "info": ham_info
+            }
+
+            bbcode = sablon_motoru.oyun_sablonu(veri_paketi)
+            
+            sag_txt.delete("1.0", "end")
+            sag_txt.insert("1.0", bbcode)
+            sag_txt._textbox.tag_add("center", "1.0", "end")
+            self.bbcode_renklendir(sag_txt)
+
+        def temizle_oyun():
+            ent_ad.delete(0, 'end'); ent_afis.delete(0, 'end'); txt_tanitim.delete('1.0', 'end'); ent_fragman.delete(0, 'end'); txt_sistem.delete('1.0', 'end'); txt_info.delete('1.0', 'end')
+            sag_txt.delete("1.0", "end")
+            txt_tanitim.insert("1.0", ornek_tanitim); txt_tanitim.configure(text_color="gray")
+            txt_sistem.insert("1.0", ornek_sistem); txt_sistem.configure(text_color="gray")
+            txt_info.insert("1.0", ornek_info); txt_info.configure(text_color="gray")
+
+        def kaydet_oyun():
+            dosya_yolu = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Metin Dosyası", "*.txt")])
+            if dosya_yolu:
+                data = {
+                    "ad": ent_ad.get(), "afis": ent_afis.get(), 
+                    "tanitim": "" if txt_tanitim.get('1.0', 'end-1c') == ornek_tanitim else txt_tanitim.get('1.0', 'end-1c'), 
+                    "fragman": ent_fragman.get(), 
+                    "sistem": "" if txt_sistem.get('1.0', 'end-1c') == ornek_sistem else txt_sistem.get('1.0', 'end-1c'), 
+                    "info": "" if txt_info.get('1.0', 'end-1c') == ornek_info else txt_info.get('1.0', 'end-1c')
+                }
+                with open(dosya_yolu, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False, indent=4)
+                messagebox.showinfo("Başarı", "Taslak kaydedildi!")
+
+        def yukle_oyun():
+            dosya_yolu = filedialog.askopenfilename(filetypes=[("Metin Dosyası", "*.txt")])
+            if dosya_yolu:
+                try:
+                    with open(dosya_yolu, "r", encoding="utf-8") as f: data = json.load(f)
+                    temizle_oyun()
+                    ent_ad.insert(0, data["ad"]); ent_afis.insert(0, data["afis"]); ent_fragman.insert(0, data["fragman"])
+                    if data["tanitim"].strip():
+                        txt_tanitim.delete('1.0', 'end')
+                        txt_tanitim.insert("1.0", data["tanitim"])
+                        txt_tanitim.configure(text_color=["#000000", "#FFFFFF"])
+                    if data["sistem"].strip():
+                        txt_sistem.delete('1.0', 'end')
+                        txt_sistem.insert("1.0", data["sistem"])
+                        txt_sistem.configure(text_color=["#000000", "#FFFFFF"])
+                    if data["info"].strip():
+                        txt_info.delete('1.0', 'end')
+                        txt_info.insert("1.0", data["info"])
+                        txt_info.configure(text_color=["#000000", "#FFFFFF"])
+                    oyun_bbcode_uret()
+                except Exception: messagebox.showerror("Hata", "Geçersiz dosya!")
+
+        tasarim_elemanlari.ekle_alt_butonlar(self, sag_frame, sag_txt, temizle_oyun, kaydet_oyun, yukle_oyun)
+    def tasarla_diger_sekmesi(self):
+        sol, sag_txt, sag_frame = tasarim_elemanlari.create_layout_structure(self.tab_diger)
+
+        ornek_ad = "Autodesk AutoCAD x64 2019.1.1 Full"
+        ornek_afis = "https://ibb.co"
+        ornek_tanitim = "Mimarlar ve mühendisler tarafından sıklıkla kullanılan Autodesk AutoCAD ile dilediğiniz inşaatların tasarımlarını sanal ortamda rahatlıkla hazırlayabilecek ve 750.000'den fazla akıllı nesneyi kullanarak projenizi harika hale getireceksiniz. Program"
+        ornek_fragman = "https://youtu.be"
+        ornek_sistem = "Operating System: Microsoft Windows 10 (64-bit only), 8.1 (32-bit & 64-bit), or 7 SP1 (32-bit & 64-bit) Processor: 2.5 GHz (3+ GHz recommended) Memory: 8 GB (16GB recommended) Disk space: 6.0 GB Display: 1920 x 1080 resolution with True Color"
+        ornek_info = r"1- Programı kurun.Kurulum bittikten sonra, programı çalıştırmadan kurulumdan çıkın. 2- Yukarıdaki linkten indirdiğiniz dosyanın içindeki nlm11.14.1.3_ipv4_ipv6_win64.msi programını (burası önemli ve işin püf noktası) C:\Program Files\Autodesk\Network License Manager klasörüne kurun. 3- Yukarıdaki linkten"
+
+        ent_ad = tasarim_elemanlari.ekle_girdi(sol, "Adı", ornek=ornek_ad, update_callback=lambda: diger_bbcode_uret())
+        ent_afis = tasarim_elemanlari.ekle_girdi(sol, "Afiş (Resim Linki)", has_upload=True, ornek=ornek_afis, update_callback=lambda: diger_bbcode_uret())
+        txt_tanitim = tasarim_elemanlari.ekle_girdi(sol, "Tanıtım", is_textbox=True, height=80, ornek=ornek_tanitim, update_callback=lambda: diger_bbcode_uret())
+        ent_fragman = tasarim_elemanlari.ekle_girdi(sol, "Fragman (Youtube Linki)", ornek=ornek_fragman, update_callback=lambda: diger_bbcode_uret())
+        txt_sistem = tasarim_elemanlari.ekle_girdi(sol, "Minumum Sistem", is_textbox=True, height=100, ornek=ornek_sistem, update_callback=lambda: diger_bbcode_uret())
+        txt_info = tasarim_elemanlari.ekle_girdi(sol, "NFO / info", is_textbox=True, height=80, ornek=ornek_info, update_callback=lambda: diger_bbcode_uret())
+
+        def text_placeholder_ayarla(textbox_obj, varsayilan_metin):
+            textbox_obj.insert("1.0", varsayilan_metin)
+            textbox_obj.configure(text_color="gray")
+            
+            def odak_giris(event):
+                if textbox_obj.get("1.0", "end-1c").strip() == varsayilan_metin.strip():
+                    textbox_obj.delete("1.0", "end")
+                    textbox_obj.configure(text_color=["#000000", "#FFFFFF"])
+                    
+            def odak_cikis(event):
+                if not textbox_obj.get("1.0", "end-1c").strip():
+                    textbox_obj.insert("1.0", varsayilan_metin)
+                    textbox_obj.configure(text_color="gray")
+                    
+            textbox_obj.bind("<FocusIn>", odak_giris)
+            textbox_obj.bind("<FocusOut>", odak_cikis)
+
+        text_placeholder_ayarla(txt_tanitim, ornek_tanitim)
+        text_placeholder_ayarla(txt_sistem, ornek_sistem)
+        text_placeholder_ayarla(txt_info, ornek_info)
+
+        def diger_bbcode_uret():
+            guncel_tanitim = txt_tanitim.get('1.0', 'end-1c')
+            guncel_sistem = txt_sistem.get('1.0', 'end-1c')
+            guncel_info = txt_info.get('1.0', 'end-1c')
+            
+            ham_tanitim = "" if guncel_tanitim.strip() == ornek_tanitim.strip() else guncel_tanitim
+            ham_sistem = "" if guncel_sistem.strip() == ornek_sistem.strip() else guncel_sistem
+            ham_info = "" if guncel_info.strip() == ornek_info.strip() else guncel_info
+
+            if not ent_ad.get().strip() and not ent_afis.get().strip() and not ham_tanitim.strip() and not ent_fragman.get().strip() and not ham_sistem.strip() and not ham_info.strip():
+                sag_txt.delete("1.0", "end")
+                return
+
+            veri_paketi = {
+                "ad": ent_ad.get(), "afis": ent_afis.get(), "tanitim": ham_tanitim,
+                "fragman": ent_fragman.get(), "sistem": ham_sistem, "info": ham_info
+            }
+
+            bbcode = sablon_motoru.program_sablonu(veri_paketi)
+            
+            sag_txt.delete("1.0", "end")
+            sag_txt.insert("1.0", bbcode)
+            sag_txt._textbox.tag_add("center", "1.0", "end")
+            self.bbcode_renklendir(sag_txt)
+
+        def temizle_diger():
+            ent_ad.delete(0, 'end'); ent_afis.delete(0, 'end'); txt_tanitim.delete('1.0', 'end'); ent_fragman.delete(0, 'end'); txt_sistem.delete('1.0', 'end'); txt_info.delete('1.0', 'end')
+            sag_txt.delete("1.0", "end")
+            txt_tanitim.insert("1.0", ornek_tanitim); txt_tanitim.configure(text_color="gray")
+            txt_sistem.insert("1.0", ornek_sistem); txt_sistem.configure(text_color="gray")
+            txt_info.insert("1.0", ornek_info); txt_info.configure(text_color="gray")
+
+        def kaydet_diger():
+            dosya_yolu = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Metin Dosyası", "*.txt")])
+            if dosya_yolu:
+                data = {
+                    "ad": ent_ad.get(), "afis": ent_afis.get(), 
+                    "tanitim": "" if txt_tanitim.get('1.0', 'end-1c') == ornek_tanitim else txt_tanitim.get('1.0', 'end-1c'), 
+                    "fragman": ent_fragman.get(), 
+                    "sistem": "" if txt_sistem.get('1.0', 'end-1c') == ornek_sistem else txt_sistem.get('1.0', 'end-1c'), 
+                    "info": "" if txt_info.get('1.0', 'end-1c') == ornek_info else txt_info.get('1.0', 'end-1c')
+                }
+                with open(dosya_yolu, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False, indent=4)
+                messagebox.showinfo("Başarı", "Taslak kaydedildi!")
+
+        def yukle_diger():
+            dosya_yolu = filedialog.askopenfilename(filetypes=[("Metin Dosyası", "*.txt")])
+            if dosya_yolu:
+                try:
+                    with open(dosya_yolu, "r", encoding="utf-8") as f: data = json.load(f)
+                    temizle_diger()
+                    ent_ad.insert(0, data["ad"]); ent_afis.insert(0, data["afis"]); ent_fragman.insert(0, data["fragman"])
+                    if data["tanitim"].strip():
+                        txt_tanitim.delete('1.0', 'end')
+                        txt_tanitim.insert("1.0", data["tanitim"])
+                        txt_tanitim.configure(text_color=["#000000", "#FFFFFF"])
+                    if data["sistem"].strip():
+                        txt_sistem.delete('1.0', 'end')
+                        txt_sistem.insert("1.0", data["sistem"])
+                        txt_sistem.configure(text_color=["#000000", "#FFFFFF"])
+                    if data["info"].strip():
+                        txt_info.delete('1.0', 'end')
+                        txt_info.insert("1.0", data["info"])
+                        txt_info.configure(text_color=["#000000", "#FFFFFF"])
+                    diger_bbcode_uret()
+                except Exception: messagebox.showerror("Hata", "Geçersiz dosya!")
+
+        tasarim_elemanlari.ekle_alt_butonlar(self, sag_frame, sag_txt, temizle_diger, kaydet_diger, yukle_diger)
+    def tasarla_vip_sekmesi(self):
+        sol, sag_txt, sag_frame = tasarim_elemanlari.create_layout_structure(self.tab_vip)
+        
+        ornek_sunum = "Nubiles MFP Jan-May 14 20 20 H2K"
+        ornek_ekran = "http://imgbox.com"
+
+        # Giriş alanlarına tuş vuruşu yapıldığında otomatik tetikleme bağlandı (Düzeltildi)
+        ent_ad = tasarim_elemanlari.ekle_girdi(sol, "Sunum Adı", ornek=ornek_sunum, update_callback=lambda: vip_bbcode_uret())
+        ent_ekran = tasarim_elemanlari.ekle_girdi(sol, "Ekran Görüntüsü (Resim Linki)", has_upload=True, ornek=ornek_ekran, update_callback=lambda: vip_bbcode_uret())
+
+        def vip_bbcode_uret():
+            if not ent_ad.get().strip() and not ent_ekran.get().strip():
+                sag_txt.delete("1.0", "end")
+                return
+
+            veri_paketi = {
+                "ad": ent_ad.get(),
+                "ekran": ent_ekran.get()
+            }
+
+            # Şablon motorundan gelen çıktıyı merkeze alarak yazdırır
+            bbcode = sablon_motoru.vip_sablonu(veri_paketi)
+            
+            sag_txt.delete("1.0", "end")
+            sag_txt.insert("1.0", bbcode)
+            sag_txt._textbox.tag_add("center", "1.0", "end")
+            self.bbcode_renklendir(sag_txt)
+
+        def temizle_vip():
+            ent_ad.delete(0, 'end'); ent_ekran.delete(0, 'end')
+            sag_txt.delete("1.0", "end")
+
+        def kaydet_vip():
+            dosya_yolu = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Metin Dosyası", "*.txt")])
+            if dosya_yolu:
+                data = {"ad": ent_ad.get(), "ekran": ent_ekran.get()}
+                with open(dosya_yolu, "w", encoding="utf-8") as f:
+                    json.dump(data, f, ensure_ascii=False, indent=4)
+                messagebox.showinfo("Başarı", "Taslak kaydedildi!")
+
+        def yukle_vip():
+            dosya_yolu = filedialog.askopenfilename(filetypes=[("Metin Dosyası", "*.txt")])
+            if dosya_yolu:
+                try:
+                    with open(dosya_yolu, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    temizle_vip()
+                    ent_ad.insert(0, data["ad"])
+                    ent_ekran.insert(0, data["ekran"])
+                    # HATALI SATIR DÜZELTİLDİ: Fonksiyon ismi doğru şekilde çağrılıyor
+                    vip_bbcode_uret()
+                except Exception:
+                    messagebox.showerror("Hata", "Geçersiz dosya!")
+
+        tasarim_elemanlari.ekle_alt_butonlar(self, sag_frame, sag_txt, temizle_vip, kaydet_vip, yukle_vip)
+
+# --- UYGULAMANIN ANA TETİKLEYİCİ DÖNGÜSÜ ---
+if __name__ == "__main__":
+    app = BiTTuRKMuadiliApp()
+    app.mainloop()
+

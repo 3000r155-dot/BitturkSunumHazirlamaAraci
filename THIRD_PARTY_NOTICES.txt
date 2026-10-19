@@ -1,0 +1,8 @@
+Twemoji graphics
+Copyright Twitter, Inc. and other contributors.
+Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+Source: https://github.com/jdecked/twemoji
+License: https://github.com/jdecked/twemoji/blob/main/LICENSE-GRAPHICS
+
+The bundled icons use Twemoji artwork. Most are unmodified; app_icon.png and
+app_icon.ico combine a scaled Twemoji magnet with a project-designed background.

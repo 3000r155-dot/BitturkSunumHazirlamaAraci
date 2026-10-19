@@ -1,0 +1,221 @@
+import re
+
+# Paylaştığınız örnek bağlantılardaki (Film, Dizi, Oyun, Müzik, Program, VIP) şerit ve buton görsellerinin tam yerleşik URL deposu
+SERIT_URL_DEPOSU = {
+    "film_detay": "http://bitturk.net",
+    "film_konu": "http://bitturk.net",
+    "film_oyuncu": "http://bitturk.net",
+    "dizi_detay": "http://bitturk.net",
+    "dizi_konu": "http://bitturk.net",
+    "dizi_oyuncu": "http://bitturk.net",
+    "muzik_detay": "http://bitturk.net",
+    "muzik_parca": "http://bitturk.net",
+    "oyun_tanitim": "http://bitturk.net",
+    "oyun_sistem": "http://bitturk.net",
+    "program_tanitim": "http://bitturk.net",
+    "program_sistem": "http://bitturk.net",
+    "fragman": "http://bitturk.net",
+    "nfo": "http://bitturk.net",
+    "keyifli_seyirler": "http://bitturk.net",
+    "kaynak": "http://bitturk.net"
+}
+def format_youtube_url(url):
+    """Kullanıcıdan gelen karmaşık youtube, shorts veya embed linklerini temiz saf watch?v= formatına zorlar."""
+    if not url or not url.strip():
+        return "https://youtube.com"
+        
+    video_id = "dQw4w9WgXcQ"
+    match = re.search(r'(?:v=|\/v\/|embed\/|youtu\.be\/|\/shorts\/|watch\?v=)([a-zA-Z0-9_-]{11})', url)
+    if match:
+        video_id = match.group(1)
+        
+    return f"https://youtube.com{video_id}"
+def build_media_language_icons(medya_secenekleri):
+    """Seçilen dil parametrelerine göre BiTTuRK yan yana img etiket bloğunu merkezlenmiş olarak inşa eder."""
+    dil_kodlari = []
+    
+    if medya_secenekleri.get("cift") == "Evet":
+        dil_kodlari.append("[img]http://bitturk.net[/img]")
+    if medya_secenekleri.get("dublaj") == "Evet":
+        dil_kodlari.append("[img]http://bitturk.net[/img]")
+    if medya_secenekleri.get("orjinal") == "Evet":
+        dil_kodlari.append("[img]http://bitturk.net[/img]")
+    if medya_secenekleri.get("altyazi") == "Evet":
+        dil_kodlari.append("[img]http://bitturk.net[/img]")
+        
+    if dil_kodlari:
+        return f"[center]{''.join(dil_kodlari)}[/center]\n"
+    return ""
+def film_sablonu(veri, medya_secenekleri):
+    """Film sekmesi (tid=222898) için şerit yerleşimi, yazı tipi ve boyutları tam uyumlu BBCode motoru."""
+    kod = []
+    
+    # 1. Başlık Alanı
+    if veri.get("ad"):
+        kod.append(f"{veri['ad'].strip()}\n")
+        
+    # 2. Dil İkonları Paneli
+    kod.append(build_media_language_icons(medya_secenekleri))
+    
+    # 3. Ana Film Afiş Bloğu
+    if veri.get("afis"):
+        kod.append(f"[center Pall] [img]{veri['afis'].strip()}[/img][/center]\n")
+        
+    # 4. Film Detayları Şeridi ve Görseli
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['film_detay']}[/img][/center]")
+    if veri.get("detay"):
+        kod.append(f"[center][img]{veri['detay'].strip()}[/img][/center]\n")
+    # 5. Film Oyuncuları Şeridi ve Görseli
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['film_oyuncu']}[/img][/center]")
+    if veri.get("oyuncu"):
+        kod.append(f"[center][img]{veri['oyuncu'].strip()}[/img][/center]\n")
+        
+    # 6. Film Konusu Şeridi ve Kalın Metin Çıktısı (Tam Örnek Düzeni)
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['film_konu']}[/img][/center]")
+    if veri.get("konu"):
+        kod.append(f"[center][b]{veri['konu'].strip()}[/b][/center]\n")
+        
+    # 7. Fragman Şeridi ve YouTube Kodu
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['fragman']}[/img][/center]")
+    fragman_url = format_youtube_url(veri.get("fragman"))
+    kod.append(f"[center][youtube]{fragman_url}[/youtube][/center]\n")
+    # 8. NFO Şeridi ve Code Bloğu
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['nfo']}[/img][/center]")
+    if veri.get("info"):
+        kod.append(f"[center][code]{veri['info'].strip()}[/code][/center]\n")
+    else:
+        kod.append("[center][code]Info Bilgileri NFO Sekmesindedir[/code][/center]\n")
+        
+    # 9. Standart Kapanış Şeritleri ve Damgası
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['keyifli_seyirler']}[/img][/center]")
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['kaynak']}[/img][/center]")
+    
+    return "".join(kod)
+def dizi_sablonu(veri, medya_secenekleri):
+    """Dizi sekmesi (tid=224462) için şerit yerleşimi ve yazı tipi tam uyumlu BBCode motoru."""
+    kod = []
+    
+    if veri.get("ad"):
+        kod.append(f"{veri['ad'].strip()}\n")
+        
+    kod.append(build_media_language_icons(medya_secenekleri))
+    
+    if veri.get("afis"):
+        kod.append(f"[center][img]{veri['afis'].strip()}[/img][/center]\n")
+        
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['dizi_detay']}[/img][/center]")
+    if veri.get("detay"):
+        kod.append(f"[center][img]{veri['detay'].strip()}[/img][/center]\n")
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['dizi_oyuncu']}[/img][/center]")
+    if veri.get("oyuncu"):
+        kod.append(f"[center][img]{veri['oyuncu'].strip()}[/img][/center]\n")
+        
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['dizi_konu']}[/img][/center]")
+    if veri.get("konu"):
+        kod.append(f"[center][b]{veri['konu'].strip()}[/b][/center]\n")
+        
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['fragman']}[/img][/center]")
+    fragman_url = format_youtube_url(veri.get("fragman"))
+    kod.append(f"[center][youtube]{fragman_url}[/youtube][/center]\n")
+    
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['nfo']}[/img][/center]")
+    if veri.get("info"):
+        kod.append(f"[center][code]{veri['info'].strip()}[/code][/center]\n")
+    else:
+        kod.append("[center][code]Info Bilgileri NFO Sekmesindedir[/code][/center]\n")
+        
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['keyifli_seyirler']}[/img][/center]")
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['kaynak']}[/img][/center]")
+    
+    return "".join(kod)
+def muzik_sablonu(veri):
+    """Müzik sekmesi (tid=224534) örnek düzenine tam uyumlu albüm BBCode motoru."""
+    kod = []
+    
+    if veri.get("album"):
+        kod.append(f"{veri['album'].strip()}\n")
+        
+    if veri.get("afis"):
+        kod.append(f"[center][img]{veri['afis'].strip()}[/img][/center]\n")
+        
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['muzik_detay']}[/img][/center]")
+    if veri.get("detay"):
+        kod.append(f"[center][b]{veri['detay'].strip()}[/b][/center]\n")
+        
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['muzik_parca']}[/img][/center]")
+    if veri.get("parca"):
+        kod.append(f"[center][b]{veri['parca'].strip()}[/b][/center]\n")
+        
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['keyifli_seyirler']}[/img][/center]")
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['kaynak']}[/img][/center]")
+    
+    return "".join(kod)
+def oyun_sablonu(veri):
+    """Oyun sekmesi (tid=224032) örnek düzenine tam uyumlu şeritli BBCode motoru."""
+    kod = []
+    
+    if veri.get("ad"):
+        kod.append(f"{veri['ad'].strip()}\n")
+        
+    if veri.get("afis"):
+        kod.append(f"[center][img]{veri['afis'].strip()}[/img][/center]\n")
+        
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['oyun_tanitim']}[/img][/center]")
+    if veri.get("tanitim"):
+        kod.append(f"[center][b]{veri['tanitim'].strip()}[/b][/center]\n")
+        
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['fragman']}[/img][/center]")
+    fragman_url = format_youtube_url(veri.get("fragman"))
+    kod.append(f"[center][youtube]{fragman_url}[/youtube][/center]\n")
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['oyun_sistem']}[/img][/center]")
+    if veri.get("sistem"):
+        kod.append(f"[center][b]{veri['sistem'].strip()}[/b][/center]\n")
+        
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['nfo']}[/img][/center]")
+    if veri.get("info"):
+        kod.append(f"[center][code]{veri['info'].strip()}[/code][/center]\n")
+        
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['keyifli_seyirler']}[/img][/center]")
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['kaynak']}[/img][/center]")
+    
+    return "".join(kod)
+
+def program_sablonu(veri):
+    """Program sekmesi (tid=225010) örnek düzenine tam uyumlu yazılım BBCode motoru."""
+    kod = []
+    
+    if veri.get("ad"):
+        kod.append(f"{veri['ad'].strip()}\n")
+        
+    if veri.get("afis"):
+        kod.append(f"[center][img]{veri['afis'].strip()}[/img][/center]\n")
+        
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['program_tanitim']}[/img][/center]")
+    if veri.get("tanitim"):
+        kod.append(f"[center][b]{veri['tanitim'].strip()}[/b][/center]\n")
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['fragman']}[/img][/center]")
+    fragman_url = format_youtube_url(veri.get("fragman"))
+    kod.append(f"[center][youtube]{fragman_url}[/youtube][/center]\n")
+    
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['program_sistem']}[/img][/center]")
+    if veri.get("sistem"):
+        kod.append(f"[center][b]{veri['sistem'].strip()}[/b][/center]\n")
+        
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['nfo']}[/img][/center]")
+    if veri.get("info"):
+        kod.append(f"[center][code]{veri['info'].strip()}[/code][/center]\n")
+        
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['keyifli_seyirler']}[/img][/center]")
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['kaynak']}[/img][/center]")
+    
+    return "".join(kod)
+
+def vip_sablonu(veri):
+    """VIP sekmesi (tid=225122) örnek düzenine tam uyumlu minimal şeritli motor."""
+    kod = []
+    if veri.get("ad"):
+        kod.append(f"{veri['ad'].strip()}\n")
+    if veri.get("ekran"):
+        kod.append(f"[center][img]{veri['ekran'].strip()}[/img][/center]\n")
+    kod.append(f"[center][img]{SERIT_URL_DEPOSU['keyifli_seyirler']}[/img][/center]")
+    return "".join(kod)

@@ -1,0 +1,105 @@
+# sablon_motoru.py - BiTTuRK Sunum Hazırlama Aracı Şablon Motoru
+
+# ayarlar.py içerisindeki havuz yapısı ve sizin belirttiğiniz birebir linkler
+RESIM_HAVUZU = {
+    # Dil Butonları (https)
+    "orjinal": "https://bitturk.net/images/orjdub.png",
+    "cift": "https://bitturk.net/images/dual.png",
+    "dublaj": "https://bitturk.net/images/turkcedub.png",
+    "altyazi": "https://bitturk.net/images/altyazili.png",
+    "3d": "https://bitturk.net/images/3d.png",
+    "anonim": "https://bitturk.net/images/anonimkaynak.png",
+    
+    # Şerit Görselleri (http)
+    "dizidetaylari": "https://bitturk.net/images/dizidetaylari.png",
+    "dizioyunculari": "https://bitturk.net/images/dizioyunculari.png",
+    "dizikonusu": "https://bitturk.net/images/dizikonusu.png",
+    "fragman": "https://bitturk.net/images/fragman.png",
+    "nfo": "https://bitturk.net/images/nfo.png",
+    "keyifliseyirler": "https://bitturk.net/images/keyifliseyirler.png",
+    "kaynak": "https://bitturk.net/images/kaynak.png",
+    
+    # Diğer Şerit Linkleriniz (Eksiksiz Sabit Tutulanlar)
+    "filmdetaylari": "https://bitturk.net/images/filmdetaylari.png",
+    "filmkonusu": "https://bitturk.net/images/filmkonusu.png",
+    "oyuncular": "https://bitturk.net/images/oyuncular.png",
+    "oyuntanitim": "https://bitturk.net/images/oyuntanitim.png",
+    "sistemgereksinimi": "https://bitturk.net/images/sistemgereksinimi.png",
+    "bilgi": "https://bitturk.net/images/bilgi.png",
+    "programtanitim": "https://bitturk.net/images/programtanitim.png",
+    "ekrangoruntusu": "https://image.ibb.co/m0ecs8/ekrangoruntusu.png",
+    "xxx": "https://image.ibb.co/mu17s8/xxx.png",
+    "altin": "https://bitturk.net/images/altin.png",
+    "gumus": "https://bitturk.net/images/gumus.png",
+    "parcalistesi": "https://bitturk.net/images/parcalistesi.png",
+    "keyiflidinlemeler": "https://bitturk.net/images/keyiflidinlemeler.png",
+    "x2sunum": "https://bitturk.net/images/x2sunum.png",
+    "btrgkaynak": "https://bitturk.net/images/btrgkaynak.png"
+}
+
+def _dil_etiketleri_uret(medya_secenekleri):
+    """
+    Uygulamadaki Checkbutton durumlarına göre yan yana dil resimlerini basar.
+    ayarlar.py ve ana uygulama değişkenleriyle (Evet/Hayır) tam uyumludur.
+    """
+    dil_bbcode = ""
+    if medya_secenekleri.get("orjinal") == "Evet": 
+        dil_bbcode += f"[img]{RESIM_HAVUZU['orjinal']}[/img]"
+    if medya_secenekleri.get("cift") == "Evet": 
+        dil_bbcode += f"[img]{RESIM_HAVUZU['cift']}[/img]"
+    if medya_secenekleri.get("dublaj") == "Evet": 
+        dil_bbcode += f"[img]{RESIM_HAVUZU['dublaj']}[/img]"
+    if medya_secenekleri.get("altyazi") == "Evet": 
+        dil_bbcode += f"[img]{RESIM_HAVUZU['altyazi']}[/img]"
+    if medya_secenekleri.get("3d") == "Evet": 
+        dil_bbcode += f"[img]{RESIM_HAVUZU['3d']}[/img]"
+    if medya_secenekleri.get("anonim") == "Evet": 
+        dil_bbcode += f"[img]{RESIM_HAVUZU['anonim']}[/img]"
+    
+    if dil_bbcode:
+        return f"[center]{dil_bbcode}[/center]\n"
+    return ""
+
+def dizi_sablonu(veri, medya_secenekleri):
+    """Dizi sekmesi için BBCode taslağını oluşturur."""
+    bbcode = f"[center][b]{veri.get('ad', '')}[/b][/center]\n"
+    bbcode += _dil_etiketleri_uret(medya_secenekleri)
+    
+    if veri.get("afis"): 
+        bbcode += f"[center][img]{veri['afis']}[/img][/center]\n"
+    if veri.get("detay"): 
+        bbcode += f"[center][img]{RESIM_HAVUZU['dizidetaylari']}[/img][/center]\n[center][img]{veri['detay']}[/img][/center]\n"
+    if veri.get("konu"): 
+        bbcode += f"[center][img]{RESIM_HAVUZU['dizikonusu']}[/img][/center]\n[center][b]{veri['konu']}[/b][/center]\n"
+    if veri.get("oyuncu"): 
+        bbcode += f"[center][img]{RESIM_HAVUZU['dizioyunculari']}[/img][/center]\n[center][img]{veri['oyuncu']}[/img][/center]\n"
+    if veri.get("fragman"): 
+        bbcode += f"[center][img]{RESIM_HAVUZU['fragman']}[/img][/center]\n[center][youtube]{veri['fragman']}[/youtube][/center]\n"
+    if veri.get("info"): 
+        bbcode += f"[center][img]{RESIM_HAVUZU['nfo']}[/img][/center]\n[center][code]{veri['info']}[/code][/center]\n"
+    if veri.get("kaynak_durum") == "Evet" and veri.get("kaynak_veri"):
+        bbcode += f"[center][img]{RESIM_HAVUZU['kaynak']}[/img][/center]\n[center]{veri['kaynak_veri']}[/center]\n"
+        
+    bbcode += f"[center][img]{RESIM_HAVUZU['keyifliseyirler']}[/img][/center]"
+    return bbcode
+
+def film_sablonu(veri, medya_secenekleri):
+    """Film sekmesi için BBCode taslağını oluşturur."""
+    bbcode = f"[center][b]{veri.get('ad', '')}[/b][/center]\n"
+    bbcode += _dil_etiketleri_uret(medya_secenekleri)
+    
+    if veri.get("afis"): 
+        bbcode += f"[center][img]{veri['afis']}[/img][/center]\n"
+    if veri.get("detay"): 
+        bbcode += f"[center][img]{RESIM_HAVUZU['filmdetaylari']}[/img][/center]\n[center][img]{veri['detay']}[/img][/center]\n"
+    if veri.get("konu"): 
+        bbcode += f"[center][img]{RESIM_HAVUZU['filmkonusu']}[/img][/center]\n[center][b]{veri['konu']}[/b][/center]\n"
+    if veri.get("oyuncu"): 
+        bbcode += f"[center][img]{RESIM_HAVUZU['oyuncular']}[/img][/center]\n[center][img]{veri['oyuncu']}[/img][/center]\n"
+    if veri.get("fragman"): 
+        bbcode += f"[center][img]{RESIM_HAVUZU['fragman']}[/img][/center]\n[center][youtube]{veri['fragman']}[/youtube][/center]\n"
+    if veri.get("info"): 
+        bbcode += f"[center][img]{RESIM_HAVUZU['nfo']}[/img][/center]\n[center][code]{veri['info']}[/code][/center]\n"
+        
+    bbcode += f"[center][img]{RESIM_HAVUZU['keyifliseyirler']}[/img][/center]"
+    return bbcode

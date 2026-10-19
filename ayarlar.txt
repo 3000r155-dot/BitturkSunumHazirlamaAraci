@@ -1,0 +1,43 @@
+# ayarlar.py - MÜHÜRLÜ HAVUZ, REGEX VE DLL İKON TANIMLAMALARI
+
+MUHURLU_URL_DEPOLOSU = {
+    "SITEYE_GIT": "https://bitturk.net",
+    "orjinal": "https://bitturk.net",
+    "cift": "https://bitturk.net",
+    "dublaj": "https://bitturk.net",
+    "altyazi": "https://bitturk.net",
+    "3d": "https://bitturk.net",
+    "anonim": "https://bitturk.net"
+}
+
+DIL_PATTERNLER = [
+    r"\[img\]https://bitturk\.net/images/orjdub\.png\[/img\]",
+    r"\[img\]https://bitturk\.net/images/dual\.png\[/img\]",
+    r"\[img\]https://bitturk\.net/images/turkcedub\.png\[/img\]",
+    r"\[img\]https://bitturk\.net/images/altyazili\.png\[/img\]",
+    r"\[img\]https://bitturk\.net/images/3d\.png\[/img\]",
+    r"\[img\]https://bitturk\.net/images/anonimkaynak\.png\[/img\]"
+]
+
+SERIT_PATTERNLER = [
+    r"\[img\]http://bitturk\.net/images/dizidetaylari\.png\[/img\]",
+    r"\[img\]http://bitturk\.net/images/dizioyunculari\.png\[/img\]",
+    r"\[img\]http://bitturk\.net/images/dizikonusu\.png\[/img\]",
+    r"\[img\]http://bitturk\.net/images/fragman\.png\[/img\]",
+    r"\[img\]http://bitturk\.net/images/nfo\.png\[/img\]",
+    r"\[img\]http://bitturk\.net/images/keyifliseyirler\.png\[/img\]",
+    r"\[img\]http://bitturk\.net/images/kaynak\.png\[/img\]"
+]
+
+# --- DLL VE MODERN İKON YAPILANDIRMASI ---
+DLL_YOLU = "imageres.dll" 
+
+IKON_INDEKSLERI = {
+    "temizle": 84,     
+    "kopyala": 22,     
+    "kaydet": 28,      
+    "yukle": 3,        
+    "site": 142,       
+    "karanlik": 121,   
+    "aydinlik": 122    
+}

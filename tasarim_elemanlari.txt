@@ -1,0 +1,400 @@
+import customtkinter as ctk
+import webbrowser
+from tkinter import filedialog, messagebox, Canvas
+import json
+import re
+from playwright.sync_api import sync_playwright
+import ayarlar
+import requests
+from PIL import Image, ImageTk, ImageDraw
+import io
+import threading
+from concurrent.futures import ThreadPoolExecutor
+
+# 🚨 KESİN KİLİT: Orijinal kararlı listeniz parantezleri kapatılarak mühürlenmiştir! 🚨
+TÜM_GİRDİLER = []
+TÜM_ONAY_KUTULARI = []
+TÜM_ONAY_ETİKETLERİ = []
+ANA_YÜKLEME_GÖSTERGESI = None
+ANALOG_PROGRESS_BAR = None
+RESİM_HAVUZU = ThreadPoolExecutor(max_workers=6)
+def create_layout_structure(parent):
+    global ANA_YÜKLEME_GÖSTERGESI, ANALOG_PROGRESS_BAR
+    # --- SOL PANEL: FORM GİRİŞ ALANI ---
+    sol_frame = ctk.CTkFrame(parent, width=350, fg_color="transparent")
+    sol_frame.pack(side="left", fill="both", expand=False, padx=10, pady=10)
+    sol_frame.pack_propagate(False)
+
+    # --- SAĞ PANEL: SAF BBCODE ÇIKTI ALANI ---
+    sag_frame = ctk.CTkFrame(parent, fg_color="transparent")
+    sag_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+
+    bbcode_container = ctk.CTkFrame(sag_frame, border_width=1, border_color=["#D1D5DB", "#43474B"])
+    bbcode_container.pack(fill="both", expand=True, pady=(0, 4))
+    
+    lbl_bbcode_title = ctk.CTkLabel(bbcode_container, text="  📋 Üretilen Saf BBCode Çıktısı", font=ctk.CTkFont(size=12, weight="bold"), text_color=["#4B5563", "#9CA3AF"])
+    lbl_bbcode_title.pack(anchor="w", pady=(6, 2), padx=6)
+    txt_output = ctk.CTkTextbox(bbcode_container, font=ctk.CTkFont(family="Courier", size=13), fg_color="transparent")
+    txt_output.pack(padx=8, pady=(2, 8), fill="both", expand=True)
+
+    # ANA EKRANDA %100 EN ÜSTTE BELİRECEK HAREKETLİ PANEL GÖSTERGESİ
+    ana_pencere = parent.winfo_toplevel()
+    ANA_YÜKLEME_GÖSTERGESI = ctk.CTkFrame(ana_pencere, fg_color=["#EAEAEA", "#1E1E1E"], corner_radius=10, border_width=2, border_color="#1F6AA5")
+    
+    lbl_ana_load = ctk.CTkLabel(ANA_YÜKLEME_GÖSTERGESI, text="⚡ Görsel Sunucuya Yükleniyor...", font=ctk.CTkFont(size=13, weight="bold"))
+    lbl_ana_load.pack(padx=40, pady=(20, 10))
+    
+    ANALOG_PROGRESS_BAR = ctk.CTkProgressBar(ANA_YÜKLEME_GÖSTERGESI, width=220, mode="indefinite", progress_color="#1F6AA5")
+    ANALOG_PROGRESS_BAR.pack(padx=40, pady=(0, 20))
+
+    txt_output._textbox.tag_configure("center", justify="center")
+    # 🚨 DÜZELTME: BİTTÜRK STANDARTLARINA UYGUN OLARAK TÜM RESMİ KODLARI PARLAK SARIYA BOYAR 🚨
+    txt_output._textbox.tag_configure("serit_resim", foreground="#FFD700", font=ctk.CTkFont(family="Courier", size=13, weight="bold"))
+    txt_output._textbox.tag_configure("dil_resim", foreground="#107C41")
+    txt_output._textbox.tag_configure("bbcode_tag", foreground="#00BFFF", font=ctk.CTkFont(family="Courier", size=13, weight="bold"))
+    txt_output._textbox.tag_configure("bbcode_url", foreground="#FF8C00", font=ctk.CTkFont(family="Courier", size=13))
+    def bbcode_renklendir_tetikleyici(event=None):
+        content = txt_output.get("1.0", "end-1c")
+        txt_output._textbox.tag_remove("bbcode_tag", "1.0", "end")
+        txt_output._textbox.tag_remove("bbcode_url", "1.0", "end")
+        txt_output._textbox.tag_remove("serit_resim", "1.0", "end")
+        
+        for match in re.finditer(r'\[\/?[a-zA-Z0-9\=\#\s\:\/\.\-\_\?\&\=\%\+\,\;\!\@\^\*\(\)]+\]', content):
+            txt_output._textbox.tag_add("bbcode_tag", f"1.0 + {match.start()} chars", f"1.0 + {match.end()} chars")
+            
+        for match in re.finditer(r'https?://[^\s\[\]]+', content):
+            txt_output._textbox.tag_add("bbcode_url", f"1.0 + {match.start()} chars", f"1.0 + {match.end()} chars")
+
+        for match in re.finditer(r'\[img\]https?://[^\s\[\]]+\[/img\]', content, re.IGNORECASE):
+            txt_output._textbox.tag_add("serit_resim", f"1.0 + {match.start()} chars", f"1.0 + {match.end()} chars")
+
+    def sarmalanmis_insert(index, text, *args):
+        txt_output._textbox._original_insert(index, text, *args)
+        bbcode_renklendir_tetikleyici()
+    txt_output._textbox._original_insert = txt_output._textbox.insert
+    txt_output._textbox.insert = sarmalanmis_insert
+    txt_output.bind("<KeyRelease>", bbcode_renklendir_tetikleyici)
+    txt_output.bbcode_renklendir = bbcode_renklendir_tetikleyici
+    
+    return sol_frame, txt_output, sag_frame
+
+def tam_otomatik_imgbb_yukle_worker(girdi_kutusu, update_callback, dosya_yolu):
+    """Playwright otomasyon mekanizması üzerinden saf kaynak ayıklayan arka plan işçisi."""
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(viewport={"width": 1280, "height": 720})
+            page = context.new_page()
+            page.route("**/*", lambda route: route.abort() if route.request.resource_type in ["image", "stylesheet", "font", "media"] else route.continue_())
+            page.goto("https://imgbb.com", wait_until="domcontentloaded")
+            page.wait_for_selector('li[data-action="top-bar-upload"]', timeout=10000)
+            page.click('li[data-action="top-bar-upload"]')
+            page.set_input_files('input[type="file"]', dosya_yolu)
+            page.wait_for_selector('button[data-action="upload"]', state="visible", timeout=10000)
+            page.click('button[data-action="upload"]')
+            page.wait_for_selector('select[id="uploaded-embed-toggle"]', state="visible", timeout=20000)
+            page.select_option('select[id="uploaded-embed-toggle"]', value="viewer-links")
+            link = page.locator('#uploaded-embed-code-0').input_value()
+            browser.close()
+            
+            # 🚨 DÜZELTME: KUTUNUN İÇİNE ARTIK [img] DEĞİL SADECE SAF WEB LİNKİ BASILARAK KISIRDÖNGÜ KIRILDI 🚨
+            if link and "ibb.co" in link:
+                def arayüze_yaz():
+                    if isinstance(girdi_kutusu, ctk.CTkTextbox):
+                        girdi_kutusu.delete("1.0", "end")
+                        girdi_kutusu.insert("1.0", link.strip())
+                    else:
+                        girdi_kutusu.delete(0, 'end')
+                        girdi_kutusu.insert(0, link.strip())
+                    if hasattr(girdi_kutusu, "renk_tazeleyici"): girdi_kutusu.renk_tazeleyici()
+                    if update_callback: update_callback()
+                if ANA_YÜKLEME_GÖSTERGESI:
+                    ANA_YÜKLEME_GÖSTERGESI.after(10, arayüze_yaz)
+    except Exception as e:
+        if ANA_YÜKLEME_GÖSTERGESI:
+            ANA_YÜKLEME_GÖSTERGESI.after(10, lambda: messagebox.showerror("Hata", f"Otomatik yükleme motorunda hata oluştu:\n{str(e)}"))
+    finally:
+        if ANA_YÜKLEME_GÖSTERGESI:
+            def paneli_kapat():
+                if ANALOG_PROGRESS_BAR: ANALOG_PROGRESS_BAR.stop()
+                ANA_YÜKLEME_GÖSTERGESI.place_forget()
+            ANA_YÜKLEME_GÖSTERGESI.after(10, paneli_kapat)
+
+def tam_otomatik_imgbb_yukle(girdi_kutusu, update_callback):
+    """Ana ekran üzerinde kilitleri çözen asenkron tetikleyici."""
+    dosya_yolu = filedialog.askopenfilename(title="Yüklenecek Görseli Seçin", filetypes=[("Resim Dosyaları", "*.png *.jpg *.jpeg *.gif *.bmp")])
+    if not dosya_yolu: return
+    
+    if ANA_YÜKLEME_GÖSTERGESI:
+        ANA_YÜKLEME_GÖSTERGESI.place(relx=0.5, rely=0.5, anchor="center")
+        ANA_YÜKLEME_GÖSTERGESI.lift()
+        if ANALOG_PROGRESS_BAR: ANALOG_PROGRESS_BAR.start()
+        ANA_YÜKLEME_GÖSTERGESI.update()
+        
+    threading.Thread(target=tam_otomatik_imgbb_yukle_worker, args=(girdi_kutusu, update_callback, dosya_yolu), daemon=True).start()
+class WebViewerPopup(ctk.CTkToplevel):
+    """BİTTÜRK Sunum arayüz çizgilerini %100 kesinlikle simüle eden yeni grafik render ekranı."""
+    def __init__(self, master, bbcode_text):
+        super().__init__(master)
+        self.title("👁️ Sunum Önizleme - WEB Viewer")
+        
+        p_genislik, p_yukseklik = 600, 850
+        e_genislik = self.winfo_screenwidth()
+        e_yukseklik = self.winfo_screenheight()
+        m_x = int((e_genislik / 2) - (p_genislik / 2))
+        m_y = int((e_yukseklik / 2) - (p_yukseklik / 2))
+        self.geometry(f"{p_genislik}x{p_yukseklik}+{m_x}+{m_y}")
+        
+        self.transient(master)
+        self.lift()
+        self.focus_force()
+        self.grab_set()
+        
+        self.resim_hafizasi = {}
+        self.main_container = ctk.CTkFrame(self)
+        self.main_container.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        canvas_bg = "#1A1A1A" if ctk.get_appearance_mode() == "Dark" else "#F0F0F0"
+        self.canvas = Canvas(self.main_container, bg=canvas_bg, highlightthickness=0)
+        self.scrollbar = ctk.CTkScrollbar(self.main_container, orientation="vertical", command=self.canvas.yview)
+        
+        self.scroll_frame = ctk.CTkFrame(self.canvas, fg_color="transparent")
+        self.scroll_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        
+        self.canvas.create_window((285, 0), window=self.scroll_frame, anchor="n")
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.scrollbar.pack(side="right", fill="y")
+
+        self.txt_view = ctk.CTkTextbox(self.scroll_frame, font=ctk.CTkFont(size=12), fg_color="transparent", wrap="word", width=540, height=720)
+        self.txt_view.pack(fill="both", expand=True)
+        self.txt_view._textbox.pack_configure(padx=10, pady=10)
+        self.txt_view._textbox.tag_configure("p_center", justify="center")
+        self.txt_view._textbox.tag_configure("p_bold", font=ctk.CTkFont(family="Arial", size=12, weight="bold"))
+        self.txt_view._textbox.tag_configure("sunum_adi_stili", font=ctk.CTkFont(family="Arial", size=18, weight="bold"), foreground="#E41414")
+        
+        c_bg = "#1E1E1E" if ctk.get_appearance_mode() == "Dark" else "#EAEAEA"
+        c_fg = "#D4D4D4" if ctk.get_appearance_mode() == "Dark" else "#232323"
+        self.txt_view._textbox.tag_configure("code_stili", font=ctk.CTkFont(family="Courier", size=11), background=c_bg, foreground=c_fg, justify="center")
+
+        self.txt_view.configure(state="normal")
+        threading.Thread(target=self.bbcode_grafik_parser_tetikleyici, args=(bbcode_text,), daemon=True).start()
+        
+        ctk.CTkButton(self, text="❌ Önizlemeyi Kapat", font=ctk.CTkFont(weight="bold"), fg_color="#E41414", hover_color="#B30F0F", command=self.safe_destroy).pack(pady=10)
+
+    def safe_destroy(self):
+        self.grab_release()
+        self.destroy()
+    def asenkron_gorsel_yukleyici(self, url, index_pos):
+        """Kilitlenmeleri çözen ve link dönüşümlerini mühürleyen asenkron resim indirme motoru."""
+        try:
+            ham_url = url.strip()
+            if "ibb.co/" in ham_url and "i.ibb.co" not in ham_url:
+                res = requests.get(ham_url, timeout=4, headers={"User-Agent": "Mozilla/5.0"})
+                if res.status_code == 200:
+                    m = re.findall(r'property="og:image" content="(https://i\.ibb\.co/[^\s"<>]+)"', res.text)
+                    if m: ham_url = m[0]
+                    else:
+                        m_alt = re.findall(r'src="(https://i\.ibb\.co/[^\s"<>]+)"', res.text)
+                        if m_alt: ham_url = m_alt[0]
+
+            if not ham_url.startswith("http"): return
+            if ham_url in self.resim_hafizasi:
+                tk_img = self.resim_hafizasi[ham_url]
+                self.after(5, lambda: self.arayuze_gorsel_enjekte(index_pos, tk_img))
+                return
+            cevap = requests.get(ham_url, timeout=5, headers={"User-Agent": "Mozilla/5.0"})
+            if cevap.status_code == 200:
+                img = Image.open(io.BytesIO(cevap.content))
+                genislik = 460 if "images/" in ham_url or "i.ibb.co" in ham_url or "imgur.com" in ham_url else 220
+                
+                # 🚨 KESİN DÜZELTME: TUPLE HATA MATRİSİNİ SIFIRLAYAN PİKSEL BOYUTLANDIRMA İNDEKSLERİ MÜHÜRLENDİ 🚨
+                oran = genislik / float(img.size[0])
+                yukseklik = int(float(img.size[1]) * oran)
+                img = img.resize((genislik, yukseklik), Image.Resampling.LANCZOS)
+                
+                tk_img = ImageTk.PhotoImage(img)
+                self.resim_hafizasi[ham_url] = tk_img
+                self.after(5, lambda: self.arayuze_gorsel_enjekte(index_pos, tk_img))
+        except Exception: pass
+
+    def asenkron_youtube_kart_isleyici(self, url, index_pos):
+        try:
+            v_id = "dQw4w9WgXcQ"
+            m = re.search(r'(?:v=|\/v\/|embed\/|youtu\.be\/|\/shorts\/|watch\?v=)([a-zA-Z0-9_-]{11})', url)
+            if m: v_id = m.group(1)
+            kapak = f"https://youtube.com{v_id}/hqdefault.jpg"
+            if kapak in self.resim_hafizasi:
+                tk_vid = self.resim_hafizasi[kapak]
+                self.after(5, lambda: self.arayuze_gorsel_enjekte(index_pos, tk_vid))
+                return
+
+            res = requests.get(kapak, timeout=5, headers={"User-Agent": "Mozilla/5.0"})
+            if res.status_code == 200:
+                img = Image.open(io.BytesIO(res.content)).convert("RGBA")
+                img = img.resize((350, 220), Image.Resampling.LANCZOS).crop((0, 20, 350, 200))
+                ov = Image.new("RGBA", img.size, (0, 0, 0, 0))
+                dr = ImageDraw.Draw(ov)
+                dr.rounded_rectangle([0, 0, img.size[0]-1, img.size[1]-1], radius=12, fill=(228, 20, 24, 220))
+                dr.polygon([(160, 85), (160, 115), (180, 100)], fill=(255, 255, 255, 255))
+                dr.rectangle([0, 0, img.size[0]-1, img.size[1]-1], outline=(120, 120, 120, 255), width=1)
+                final = Image.alpha_composite(img, ov)
+                
+                tk_vid = ImageTk.PhotoImage(final)
+                self.resim_hafizasi[kapak] = tk_vid
+                self.after(5, lambda: self.arayuze_gorsel_enjekte(index_pos, tk_vid))
+        except Exception: pass
+
+    def arayuze_gorsel_enjekte(self, index_pos, tk_img_obj):
+        try:
+            self.txt_view.configure(state="normal")
+            self.txt_view._textbox.image_create(index_pos, image=tk_img_obj)
+            self.txt_view.configure(state="disabled")
+            self.txt_view._textbox.update_idletasks()
+        except Exception: pass
+    def bbcode_grafik_parser_tetikleyici(self, text):
+        """%100 SAF STANDART ETİKET TARAYAN BBCODE FORUM UYUMLU MOTOR"""
+        temiz_veri = text.replace("\r\n", "\n").strip()
+        lines = temiz_veri.split("\n")
+        ilk_satir = False
+        
+        for line in lines:
+            line_str = line.strip()
+            if not line_str or line_str.lower() in ["center", "img]", "/img]", "/center]", "[center]", "[/center]"]: 
+                continue
+
+            if not ilk_satir and "[img]" not in line_str.lower() and "[center]" not in line_str.lower() and "[code]" not in line_str.lower():
+                self.after(5, lambda s=line_str: (self.txt_view.configure(state="normal"), self.txt_view.insert("end", s + "\n\n", ("p_center", "sunum_adi_stili")), self.txt_view.configure(state="disabled")))
+                ilk_satir = True
+                continue
+
+            if "[code]" in line_str.lower() or "[/code]" in line_str.lower():
+                cl = re.sub(r'\[\/?code\]|\[\/?center\]', '', line_str, flags=re.IGNORECASE).strip()
+                if cl:
+                    self.after(5, lambda c=cl: (self.txt_view.configure(state="normal"), self.txt_view.insert("end", "\n\n  Code:\n  " + c + "  \n\n", "code_stili"), self.txt_view.configure(state="disabled")))
+                continue
+            if "[img]" in line_str.lower():
+                links = re.findall(r'\[img\](https?://[^\s\[\]]+)\[/img\]', line_str, re.IGNORECASE)
+                if links:
+                    for url in links:
+                        idx = self.txt_view.index("end-1c")
+                        self.after(5, lambda i=idx: (self.txt_view.configure(state="normal"), self.txt_view.insert("end", "\n", "p_center"), self.txt_view.configure(state="disabled")))
+                        RESİM_HAVUZU.submit(self.asenkron_gorsel_yukleyici, url, idx)
+                    self.after(5, lambda: (self.txt_view.configure(state="normal"), self.txt_view.insert("end", "\n"), self.txt_view.configure(state="disabled")))
+                continue
+
+            if "[youtube]" in line_str.lower():
+                yt = re.search(r'\[youtube\](https?://[^\s\[\]]+)\[/youtube\]', line_str, re.IGNORECASE)
+                if yt:
+                    yt_url = yt.group(1).strip()
+                    idx_s = self.txt_view.index("end-1c")
+                    self.after(5, lambda i=idx_s: (self.txt_view.configure(state="normal"), self.txt_view.insert("end", "\n", "p_center"), self.txt_view.configure(state="disabled")))
+                    RESİM_HAVUZU.submit(self.asenkron_gorsel_yukleyici, "https://bitturk.net", idx_s)
+                    
+                    idx_v = self.txt_view.index("end-1c")
+                    self.after(5, lambda i=idx_v: (self.txt_view.configure(state="normal"), self.txt_view.insert("end", "\n\n", "p_center"), self.txt_view.configure(state="disabled")))
+                    RESİM_HAVUZU.submit(self.asenkron_youtube_kart_isleyici, yt_url, idx_v)
+                    self.after(5, lambda: (self.txt_view.configure(state="normal"), self.txt_view.insert("end", "\n"), self.txt_view.configure(state="disabled")))
+                continue
+
+            cl = re.sub(r'\[\/?center\]|\[\/?b\]', '', line_str, flags=re.IGNORECASE)
+            tags = ["p_bold"]
+            if "[center]" in line_str.lower(): tags.append("p_center")
+            if cl.strip(): 
+                self.after(5, lambda c=cl, t=tags: (self.txt_view.configure(state="normal"), self.txt_view.insert("end", c + "\n", tuple(t)), self.txt_view.configure(state="disabled")))
+
+def ekle_alt_butonlar(app_instance, parent, txt_output, temizle_func, kaydet_func, yukle_func):
+    buton_container = ctk.CTkFrame(parent, border_width=1, border_color=["#D1D5DB", "#43474B"])
+    buton_container.pack(side="top", fill="x", pady=(4, 5), padx=0, expand=False)
+    lbl_btn_title = ctk.CTkLabel(buton_container, text="  🛠️ Sunum İşlemleri & Taslak Yönetimi", font=ctk.CTkFont(size=11, weight="bold"), text_color=["#4B5563", "#9CA3AF"])
+    lbl_btn_title.pack(anchor="w", pady=(4, 1), padx=4)
+    btn_frame = ctk.CTkFrame(buton_container, fg_color="transparent")
+    btn_frame.pack(fill="x", pady=(2, 6), padx=6)
+    
+    def zincirleme_temizle():
+        temizle_func()
+        varsayilan_fg = ["#F9F9FA", "#343638"] if ctk.get_appearance_mode() == "Dark" else ["#F9F9FA", "#F9F9FA"]
+        for girdi_obj in TÜM_GİRDİLER:
+            try: girdi_obj.configure(fg_color=varsayilan_fg, text_color=["#000000", "#FFFFFF"])
+            except Exception: pass
+        for chk_obj in TÜM_ONAY_KUTULARI:
+            try: chk_obj.configure(fg_color=["#3B8ED0", "#1F6AA5"])
+            except Exception: pass
+        if hasattr(txt_output, "bbcode_renklendir"): txt_output.bbcode_renklendir()
+
+    def kopyala_panoya():
+        app_instance.clipboard_clear()
+        app_instance.clipboard_append(txt_output.get("1.0", "end-1c"))
+
+    ctk.CTkButton(btn_frame, text="🧹 Temizle", font=ctk.CTkFont(size=11, weight="bold"), height=32, command=zincirleme_temizle).pack(side="left", fill="both", expand=True, padx=2)
+    ctk.CTkButton(btn_frame, text="📋 Kopyala", font=ctk.CTkFont(size=11, weight="bold"), height=32, command=kopyala_panoya).pack(side="left", fill="both", expand=True, padx=2)
+    ctk.CTkButton(btn_frame, text="👁️ Önizleme", font=ctk.CTkFont(size=11, weight="bold"), height=32, fg_color="#1F6AA5", hover_color="#154B75", command=lambda: WebViewerPopup(app_instance, txt_output.get("1.0", "end-1c"))).pack(side="left", fill="both", expand=True, padx=2)
+    ctk.CTkButton(btn_frame, text="💾 Kaydet", font=ctk.CTkFont(size=11, weight="bold"), height=32, command=kaydet_func).pack(side="left", fill="both", expand=True, padx=2)
+    ctk.CTkButton(btn_frame, text="📂 Yükle", font=ctk.CTkFont(size=11, weight="bold"), height=32, command=yukle_func).pack(side="left", fill="both", expand=True, padx=2)
+    ctk.CTkButton(btn_frame, text="🌐 Site", font=ctk.CTkFont(size=11, weight="bold"), height=32, fg_color="green", command=lambda: webbrowser.open(ayarlar.MUHURLU_URL_DEPOLOSU["SITEYE_GIT"])).pack(side="left", fill="both", expand=True, padx=2)
+
+def ekle_girdi(parent, label_text, is_textbox=False, height=60, has_upload=False, ornek="", update_callback=None):
+    tekli_container = ctk.CTkFrame(parent, border_width=1, border_color=["#E5E7EB", "#374151"], fg_color="transparent")
+    tekli_container.pack(fill="x", pady=3, padx=2)
+    lbl = ctk.CTkLabel(tekli_container, text=f" 📦 {label_text}", font=ctk.CTkFont(size=11, weight="bold"), anchor="w")
+    lbl.pack(fill="x", pady=(3, 1), padx=4)
+    varsayilan_fg = ["#F9F9FA", "#343638"] if ctk.get_appearance_mode() == "Dark" else ["#F9F9FA", "#F9F9FA"]
+
+    def girdi_renk_guncelle(girdi_obj):
+        try:
+            veri = girdi_obj.get("1.0", "end-1c") if is_textbox else girdi_obj.get()
+            if len(veri.strip()) > 0 and veri.strip() != ornek.strip():
+                girdi_obj.configure(fg_color="#A2E8A2", text_color="#000000")
+            else:
+                girdi_obj.configure(fg_color=varsayilan_fg, text_color=["#000000", "#FFFFFF"])
+        except Exception: pass
+
+    def sarmalanmis_callback(event=None, girdi_obj=None):
+        if girdi_obj: girdi_renk_guncelle(girdi_obj)
+        if update_callback: update_callback()
+
+    if is_textbox:
+        girdi = ctk.CTkTextbox(tekli_container, height=height, font=ctk.CTkFont(size=11))
+        girdi.pack(fill="x", pady=(1, 4), padx=6)
+    else:
+        if has_upload:
+            f = ctk.CTkFrame(tekli_container, fg_color="transparent")
+            f.pack(fill="x", pady=(1, 4), padx=6)
+            girdi = ctk.CTkEntry(f, placeholder_text=ornek, font=ctk.CTkFont(size=11))
+            girdi.pack(side="left", fill="x", expand=True, padx=(0, 4))
+            btn = ctk.CTkButton(f, text="📤 Yükle", width=50, height=24, command=lambda: tam_otomatik_imgbb_yukle(girdi, lambda: sarmalanmis_callback(None, girdi)))
+            btn.pack(side="right")
+        else:
+            girdi = ctk.CTkEntry(tekli_container, placeholder_text=ornek, font=ctk.CTkFont(size=11))
+            girdi.pack(fill="x", pady=(1, 4), padx=6)
+
+    girdi.bind("<KeyRelease>", lambda event: sarmalanmis_callback(event, girdi))
+    girdi.renk_tazeleyici = lambda: girdi_renk_guncelle(girdi)
+    TÜM_GİRDİLER.append(girdi)
+    return girdi
+
+def ekle_medya_onay_kutulari(parent, update_callback=None):
+    group_box = ctk.CTkFrame(parent, border_width=1, border_color=["#D1D5DB", "#43474B"])
+    group_box.pack(fill="x", pady=5, padx=2)
+    f1 = ctk.CTkFrame(group_box, fg_color="transparent"); f1.pack(fill="x", pady=2, padx=6)
+    f2 = ctk.CTkFrame(group_box, fg_color="transparent"); f2.pack(fill="x", pady=(2, 6), padx=6)
+    vars = {"orjinal": ctk.StringVar(value="Hayır"), "cift": ctk.StringVar(value="Hayır"), "dublaj": ctk.StringVar(value="Hayır"), "altyazi": ctk.StringVar(value="Hayır"), "anonim": ctk.StringVar(value="Hayır"), "3d": ctk.StringVar(value="Hayır")}
+    def on_check_click(l_o, s_v): l_o.configure(text_color="#107C41" if s_v.get() == "Evet" else ["#000000", "#FFFFFF"]); update_callback() if update_callback else None
+
+    for idx, (k, l) in enumerate([("orjinal", "🌐 Orijinal"), ("cift", "🔄 Çift Dil"), ("dublaj", "🇹🇷 Dublaj")]):
+        item = ctk.CTkFrame(f1, width=95, height=26, fg_color="transparent"); item.pack(side="left", padx=1); item.pack_propagate(False)
+        chk = ctk.CTkCheckBox(item, text="", width=18, variable=vars[k], onvalue="Evet", offvalue="Hayır")
+        lbl = ctk.CTkLabel(item, text=l, font=ctk.CTkFont(size=10))
+        chk.configure(command=lambda c=chk, _l=lbl, v=vars[k]: on_check_click(_l, v))
+        chk.pack(side="left"); lbl.pack(side="left", padx=2); TÜM_ONAY_KUTULARI.append(chk)
+    for idx, (k, l) in enumerate([("altyazi", "📝 Altyazı"), ("anonim", "👤 Anonim"), ("3d", "🕶️ 3D")]):
+        item = ctk.CTkFrame(f2, width=95, height=26, fg_color="transparent"); item.pack(side="left", padx=1); item.pack_propagate(False)
+        chk = ctk.CTkCheckBox(item, text="", width=18, variable=vars[k], onvalue="Evet", offvalue="Hayır")
+        lbl = ctk.CTkLabel(item, text=l, font=ctk.CTkFont(size=10))
+        chk.configure(command=lambda c=chk, _l=lbl, v=vars[k]: on_check_click(_l, v))
+        chk.pack(side="left"); lbl.pack(side="left", padx=2); TÜM_ONAY_KUTULARI.append(chk)
+    return vars
+
+class YardimPenceresi:
+    def __init__(self, e, w): pass

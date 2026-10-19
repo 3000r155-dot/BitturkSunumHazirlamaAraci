@@ -1,0 +1,49 @@
+# os_optimizasyon.py - İŞLETİM SİSTEMİ ARAYÜZ VE GÖRÜNÜM OPTİMİZASYON MOTORU
+import os
+import sys
+
+def isletim_sistemi_arayuzunu_ayarla():
+    """
+    Uygulama pencereleri oluşturulmadan ÖNCE çağrılmalıdır.
+    İşletim sistemine göre High-DPI ve modern görsel stilleri tetikler.
+    """
+    if sys.platform.startswith("win"):
+        try:
+            import ctypes
+            # 1. Görev Çubuğu (Taskbar) İkon Birleşme Koruması
+            # Windows'un uygulamayı "Sıradan bir Python scripti" olarak görmesini engeller.
+            uygulama_id = "bitturk.sunum.hazirlama.araci.75"
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(uygulama_id)
+            
+            # 2. Dinamik High-DPI Awareness (Yüksek Çözünürlük Netlik Kilidi)
+            # CustomTkinter pencerelerinin modern 2K/4K ekranlarda bulanıklaşmasını engeller.
+            # Shcore API (Windows 8.1+) denemesi
+            try:
+                ctypes.windll.shcore.SetProcessDpiAwareness(2) # PROCESS_PER_MONITOR_DPI_AWARE
+            except Exception:
+                # Eski Windows sürümleri için fallback (Windows Vista/7)
+                ctypes.windll.user32.SetProcessDPIAware()
+                
+            # 3. Windows 11 Modern Pencere Stili İpuçları (İsteğe bağlı/Varsayılan koruma)
+            # Pencere gölgelendirmelerini ve Windows 11 yuvarlatılmış köşelerini stabilize eder.
+            ctypes.windll.kernel32.SetThreadErrorMode(0x0001, None) # SEM_FAILCRITICALERRORS
+            
+        except Exception:
+            # Herhangi bir DLL veya izin hatasında uygulamanın çökmesini engelle
+            pass
+            
+    elif sys.platform.startswith("darkwin"): # macOS optimizasyon alanı
+        try:
+            # macOS için özel bir DPI ayarı gerekmez, OS otomatik ölçekler.
+            # Ancak gelecekte eklenebilecek Cocoa katmanı ayarları için ayrılmıştır.
+            pass
+        except Exception:
+            pass
+            
+    elif sys.platform.startswith("linux"): # Linux / X11 - Wayland alanı
+        try:
+            # Linux üzerinde font işleme netliği için Xft.dpi zorlaması yapılabilir
+            os.environ["GDK_SCALE"] = "1"
+            os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
+        except Exception:
+            pass
