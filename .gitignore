@@ -32,6 +32,3 @@ desktop.ini
 
 # Playwright
 ms-playwright/
-
-# PyInstaller
-*.spec
