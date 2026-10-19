@@ -42,6 +42,7 @@ jobs:
         python -m playwright install chromium
 
     - name: Build with PyInstaller
+      shell: bash
       run: |
         ls -la
         pyinstaller BiTTuRK_SunumAraci.spec --clean
