@@ -43,6 +43,7 @@ jobs:
 
     - name: Build with PyInstaller
       run: |
+        ls -la
         pyinstaller BiTTuRK_SunumAraci.spec --clean
 
     - name: Upload artifact (Windows)
