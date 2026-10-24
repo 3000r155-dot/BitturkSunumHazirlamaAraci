@@ -37,6 +37,10 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
+    - name: Install Playwright Drivers Only
+      run: |
+        python -m playwright install-deps chromium
+
     - name: Build with PyInstaller
       shell: bash
       run: |
