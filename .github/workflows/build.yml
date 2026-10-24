@@ -41,6 +41,35 @@ jobs:
       run: |
         python -m playwright install chromium
 
+    - name: Find Chromium Path and Update Spec
+      shell: bash
+      run: |
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          CHROMIUM_PATH=$(find ~ -name "chrome-win64" -type d 2>/dev/null | head -1)
+          if [ -n "$CHROMIUM_PATH" ]; then
+            echo "Found Chromium at: $CHROMIUM_PATH"
+            PARENT_DIR=$(dirname "$CHROMIUM_PATH")
+            echo "Adding $PARENT_DIR to spec"
+            sed -i "s|# PLAYWRIGHT_CHROMIUM_PATH|('$PARENT_DIR', 'ms-playwright') # PLAYWRIGHT_CHROMIUM_PATH|g" BiTTuRK_SunumAraci.spec
+          fi
+        elif [ "$RUNNER_OS" == "macOS" ]; then
+          CHROMIUM_PATH=$(find ~/Library/Caches -name "chrome-mac" -type d 2>/dev/null | head -1)
+          if [ -n "$CHROMIUM_PATH" ]; then
+            echo "Found Chromium at: $CHROMIUM_PATH"
+            PARENT_DIR=$(dirname "$CHROMIUM_PATH")
+            echo "Adding $PARENT_DIR to spec"
+            sed -i '' "s|# PLAYWRIGHT_CHROMIUM_PATH|('$PARENT_DIR', 'ms-playwright') # PLAYWRIGHT_CHROMIUM_PATH|g" BiTTuRK_SunumAraci.spec
+          fi
+        else
+          CHROMIUM_PATH=$(find ~/.cache -name "chrome-linux" -type d 2>/dev/null | head -1)
+          if [ -n "$CHROMIUM_PATH" ]; then
+            echo "Found Chromium at: $CHROMIUM_PATH"
+            PARENT_DIR=$(dirname "$CHROMIUM_PATH")
+            echo "Adding $PARENT_DIR to spec"
+            sed -i "s|# PLAYWRIGHT_CHROMIUM_PATH|('$PARENT_DIR', 'ms-playwright') # PLAYWRIGHT_CHROMIUM_PATH|g" BiTTuRK_SunumAraci.spec
+          fi
+        fi
+
     - name: Build with PyInstaller
       shell: bash
       run: |

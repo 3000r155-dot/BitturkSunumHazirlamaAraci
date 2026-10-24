@@ -13,17 +13,10 @@ elif sys.platform == 'darwin':
 else:
     icon_file = 'assets/app_icon.png'
 
-# Playwright chromium binary'lerini platforma göre ekle
+# Playwright chromium binary'lerini manuel olarak ekle
 playwright_datas = []
-if sys.platform == 'win32':
-    # Windows için chromium binary'leri
-    playwright_datas.extend(collect_data_files('playwright'))
-elif sys.platform == 'darwin':
-    # macOS için chromium binary'leri
-    playwright_datas.extend(collect_data_files('playwright'))
-else:
-    # Linux için chromium binary'leri
-    playwright_datas.extend(collect_data_files('playwright'))
+playwright_datas.extend(collect_data_files('playwright'))
+# PLAYWRIGHT_CHROMIUM_PATH
 
 a = Analysis(
     ['main.py'],
