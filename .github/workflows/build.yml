@@ -45,28 +45,23 @@ jobs:
       shell: bash
       run: |
         if [ "$RUNNER_OS" == "Windows" ]; then
-          CHROMIUM_PATH=$(find ~ -name "chrome-win64" -type d 2>/dev/null | head -1)
-          if [ -n "$CHROMIUM_PATH" ]; then
-            echo "Found Chromium at: $CHROMIUM_PATH"
-            PARENT_DIR=$(dirname "$CHROMIUM_PATH")
-            echo "Adding $PARENT_DIR to spec"
-            sed -i "s|# PLAYWRIGHT_CHROMIUM_PATH|('$PARENT_DIR', 'ms-playwright') # PLAYWRIGHT_CHROMIUM_PATH|g" BiTTuRK_SunumAraci.spec
+          PLAYWRIGHT_HOME="/c/Users/runneradmin/AppData/Local/ms-playwright"
+          if [ -d "$PLAYWRIGHT_HOME" ]; then
+            echo "Found ms-playwright at: $PLAYWRIGHT_HOME"
+            # Tüm klasörleri ekle
+            sed -i "s|# PLAYWRIGHT_CHROMIUM_PATH|('$PLAYWRIGHT_HOME', 'ms-playwright') # PLAYWRIGHT_CHROMIUM_PATH|g" BiTTuRK_SunumAraci.spec
           fi
         elif [ "$RUNNER_OS" == "macOS" ]; then
-          CHROMIUM_PATH=$(find ~/Library/Caches -name "chrome-mac" -type d 2>/dev/null | head -1)
-          if [ -n "$CHROMIUM_PATH" ]; then
-            echo "Found Chromium at: $CHROMIUM_PATH"
-            PARENT_DIR=$(dirname "$CHROMIUM_PATH")
-            echo "Adding $PARENT_DIR to spec"
-            sed -i '' "s|# PLAYWRIGHT_CHROMIUM_PATH|('$PARENT_DIR', 'ms-playwright') # PLAYWRIGHT_CHROMIUM_PATH|g" BiTTuRK_SunumAraci.spec
+          PLAYWRIGHT_HOME="$HOME/Library/Caches/ms-playwright"
+          if [ -d "$PLAYWRIGHT_HOME" ]; then
+            echo "Found ms-playwright at: $PLAYWRIGHT_HOME"
+            sed -i '' "s|# PLAYWRIGHT_CHROMIUM_PATH|('$PLAYWRIGHT_HOME', 'ms-playwright') # PLAYWRIGHT_CHROMIUM_PATH|g" BiTTuRK_SunumAraci.spec
           fi
         else
-          CHROMIUM_PATH=$(find ~/.cache -name "chrome-linux" -type d 2>/dev/null | head -1)
-          if [ -n "$CHROMIUM_PATH" ]; then
-            echo "Found Chromium at: $CHROMIUM_PATH"
-            PARENT_DIR=$(dirname "$CHROMIUM_PATH")
-            echo "Adding $PARENT_DIR to spec"
-            sed -i "s|# PLAYWRIGHT_CHROMIUM_PATH|('$PARENT_DIR', 'ms-playwright') # PLAYWRIGHT_CHROMIUM_PATH|g" BiTTuRK_SunumAraci.spec
+          PLAYWRIGHT_HOME="$HOME/.cache/ms-playwright"
+          if [ -d "$PLAYWRIGHT_HOME" ]; then
+            echo "Found ms-playwright at: $PLAYWRIGHT_HOME"
+            sed -i "s|# PLAYWRIGHT_CHROMIUM_PATH|('$PLAYWRIGHT_HOME', 'ms-playwright') # PLAYWRIGHT_CHROMIUM_PATH|g" BiTTuRK_SunumAraci.spec
           fi
         fi
 
