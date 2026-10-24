@@ -8,6 +8,7 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 ShowLanguageDialog=no
+OutputDir=.
 
 [Files]
 Source: "dist\BiTTuRK_SunumAraci\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
