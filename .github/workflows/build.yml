@@ -71,6 +71,16 @@ jobs:
         ls -la
         pyinstaller BiTTuRK_SunumAraci.spec --clean
 
+    - name: Copy Playwright Browsers (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: bash
+      run: |
+        PLAYWRIGHT_HOME="/c/Users/runneradmin/AppData/Local/ms-playwright"
+        if [ -d "$PLAYWRIGHT_HOME" ]; then
+          echo "Copying ms-playwright to dist folder..."
+          cp -r "$PLAYWRIGHT_HOME" "dist/BiTTuRK_SunumAraci/_internal/ms-playwright"
+        fi
+
     - name: Create Installer (Windows)
       if: matrix.os == 'windows-latest'
       shell: bash

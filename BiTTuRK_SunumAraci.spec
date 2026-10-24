@@ -16,7 +16,6 @@ else:
 # Playwright chromium binary'lerini manuel olarak ekle
 playwright_datas = []
 playwright_datas.extend(collect_data_files('playwright'))
-# PLAYWRIGHT_CHROMIUM_PATH
 
 a = Analysis(
     ['main.py'],

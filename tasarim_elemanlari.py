@@ -202,6 +202,18 @@ def create_layout_structure(parent):
 def tam_otomatik_imgbb_yukle_worker(girdi_kutusu, update_callback, dosya_yolu):
     """Playwright otomasyon mekanizması üzerinden saf kaynak ayıklayan arka plan işçisi."""
     try:
+        import os
+        import sys
+        from pathlib import Path
+        
+        # PyInstaller ile paketlenmişse chromium path'i ayarla
+        if getattr(sys, 'frozen', False):
+            # Paketlenmiş uygulama
+            meipass = Path(sys._MEIPASS)
+            chromium_path = meipass / "_internal" / "ms-playwright" / "chromium-1243" / "chrome-win64"
+            if chromium_path.exists():
+                os.environ['PLAYWRIGHT_BROWSERS_PATH'] = str(chromium_path.parent.parent)
+        
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             context = browser.new_context(viewport={"width": 1280, "height": 720})
