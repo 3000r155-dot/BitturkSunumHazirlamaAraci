@@ -3,7 +3,7 @@ import webbrowser
 from tkinter import filedialog
 import json
 import re
-from playwright.sync_api import sync_playwright
+# Playwright kaldırıldı - görsel yükleme manuel yapıştırma ile yapılacak
 import ayarlar
 import requests
 from PIL import Image, ImageTk
@@ -200,58 +200,26 @@ def create_layout_structure(parent):
     return sol_frame, txt_output, sag_frame
 
 def tam_otomatik_imgbb_yukle_worker(girdi_kutusu, update_callback, dosya_yolu):
-    """Playwright otomasyon mekanizması üzerinden saf kaynak ayıklayan arka plan işçisi."""
+    """Manuel görsel yükleme yardımcısı - Playwright kaldırıldı."""
     try:
-        import os
-        import sys
-        from pathlib import Path
-        
-        # PyInstaller ile paketlenmişse chromium path'i ayarla
-        if getattr(sys, 'frozen', False):
-            # Paketlenmiş uygulama
-            meipass = Path(sys._MEIPASS)
-            chromium_path = meipass / "_internal" / "ms-playwright" / "chromium-1243" / "chrome-win64"
-            if chromium_path.exists():
-                os.environ['PLAYWRIGHT_BROWSERS_PATH'] = str(chromium_path.parent.parent)
-        
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            context = browser.new_context(viewport={"width": 1280, "height": 720})
-            page = context.new_page()
-            page.route("**/*", lambda route: route.abort() if route.request.resource_type in ["image", "stylesheet", "font", "media"] else route.continue_())
-            page.goto("https://imgbb.com", wait_until="domcontentloaded")
-            page.wait_for_selector('li[data-action="top-bar-upload"]', timeout=10000)
-            page.click('li[data-action="top-bar-upload"]')
-            page.set_input_files('input[type="file"]', dosya_yolu)
-            page.wait_for_selector('button[data-action="upload"]', state="visible", timeout=10000)
-            page.click('button[data-action="upload"]')
-            page.wait_for_selector('select[id="uploaded-embed-toggle"]', state="visible", timeout=20000)
-            page.select_option('select[id="uploaded-embed-toggle"]', value="viewer-links")
-            link = page.locator('#uploaded-embed-code-0').input_value()
-            browser.close()
-            
-            # 🚨 DÜZELTME: KUTUNUN İÇİNE ARTIK [img] DEĞİL SADECE SAF WEB LİNKİ BASILARAK KISIRDÖNGÜ KIRILDI 🚨
-            if link and "ibb.co" in link:
-                def arayüze_yaz():
-                    if isinstance(girdi_kutusu, ctk.CTkTextbox):
-                        girdi_kutusu.delete("1.0", "end")
-                        girdi_kutusu.insert("1.0", link.strip())
-                    else:
-                        girdi_kutusu.delete(0, 'end')
-                        girdi_kutusu.insert(0, link.strip())
-                    if hasattr(girdi_kutusu, "renk_tazeleyici"): girdi_kutusu.renk_tazeleyici()
-                    if update_callback: update_callback()
-                if ANA_YÜKLEME_GÖSTERGESI:
-                    ANA_YÜKLEME_GÖSTERGESI.after(10, arayüze_yaz)
-    except Exception as e:
         if ANA_YÜKLEME_GÖSTERGESI:
-            hata_metni = str(e)
             ANA_YÜKLEME_GÖSTERGESI.after(
                 10,
-                lambda text=hata_metni: show_themed_message(
+                show_themed_message(
+                    ANA_PENCERE_REF,
+                    "Görsel Yükleme",
+                    "Otomatik yükleme özelliği kaldırıldı.\n\nLütfen şu adımları izleyin:\n1. Görselinizi ImgBB.com veya benzeri bir siteye yükleyin\n2. Dönen linki kopyalayın\n3. Bu linke ilgili alana yapıştırın",
+                    level="info",
+                ),
+            )
+    except Exception as e:
+        if ANA_YÜKLEME_GÖSTERGESI:
+            ANA_YÜKLEME_GÖSTERGESI.after(
+                10,
+                lambda text=str(e): show_themed_message(
                     ANA_PENCERE_REF,
                     "Görsel Yükleme Hatası",
-                    f"Otomatik yükleme motorunda hata oluştu:\n{text}",
+                    f"Hata oluştu:\n{text}",
                     level="error",
                 ),
             )

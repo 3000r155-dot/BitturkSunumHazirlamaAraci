@@ -37,49 +37,11 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
-    - name: Install Playwright Chromium
-      run: |
-        python -m playwright install chromium
-
-    - name: Find Chromium Path and Update Spec
-      shell: bash
-      run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          PLAYWRIGHT_HOME="/c/Users/runneradmin/AppData/Local/ms-playwright"
-          if [ -d "$PLAYWRIGHT_HOME" ]; then
-            echo "Found ms-playwright at: $PLAYWRIGHT_HOME"
-            # Tüm klasörleri ekle
-            sed -i "s|# PLAYWRIGHT_CHROMIUM_PATH|('$PLAYWRIGHT_HOME', 'ms-playwright') # PLAYWRIGHT_CHROMIUM_PATH|g" BiTTuRK_SunumAraci.spec
-          fi
-        elif [ "$RUNNER_OS" == "macOS" ]; then
-          PLAYWRIGHT_HOME="$HOME/Library/Caches/ms-playwright"
-          if [ -d "$PLAYWRIGHT_HOME" ]; then
-            echo "Found ms-playwright at: $PLAYWRIGHT_HOME"
-            sed -i '' "s|# PLAYWRIGHT_CHROMIUM_PATH|('$PLAYWRIGHT_HOME', 'ms-playwright') # PLAYWRIGHT_CHROMIUM_PATH|g" BiTTuRK_SunumAraci.spec
-          fi
-        else
-          PLAYWRIGHT_HOME="$HOME/.cache/ms-playwright"
-          if [ -d "$PLAYWRIGHT_HOME" ]; then
-            echo "Found ms-playwright at: $PLAYWRIGHT_HOME"
-            sed -i "s|# PLAYWRIGHT_CHROMIUM_PATH|('$PLAYWRIGHT_HOME', 'ms-playwright') # PLAYWRIGHT_CHROMIUM_PATH|g" BiTTuRK_SunumAraci.spec
-          fi
-        fi
-
     - name: Build with PyInstaller
       shell: bash
       run: |
         ls -la
         pyinstaller BiTTuRK_SunumAraci.spec --clean
-
-    - name: Copy Playwright Browsers (Windows)
-      if: matrix.os == 'windows-latest'
-      shell: bash
-      run: |
-        PLAYWRIGHT_HOME="/c/Users/runneradmin/AppData/Local/ms-playwright"
-        if [ -d "$PLAYWRIGHT_HOME" ]; then
-          echo "Copying ms-playwright to dist folder..."
-          cp -r "$PLAYWRIGHT_HOME" "dist/BiTTuRK_SunumAraci/_internal/ms-playwright"
-        fi
 
     - name: Create Installer (Windows)
       if: matrix.os == 'windows-latest'

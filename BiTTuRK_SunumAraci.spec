@@ -13,9 +13,7 @@ elif sys.platform == 'darwin':
 else:
     icon_file = 'assets/app_icon.png'
 
-# Playwright chromium binary'lerini manuel olarak ekle
-playwright_datas = []
-playwright_datas.extend(collect_data_files('playwright'))
+# Playwright kaldırıldı - artık paketlenmeyecek
 
 a = Analysis(
     ['main.py'],
