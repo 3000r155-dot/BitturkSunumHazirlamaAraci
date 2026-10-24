@@ -82,9 +82,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: BiTTuRK_SunumAraci-Windows
-        path: |
-          dist/BiTTuRK_SunumAraci
-          BiTTuRK_SunumAraci_Setup.exe
+        path: BiTTuRK_SunumAraci_Setup.exe
 
     - name: Upload artifact (macOS)
       if: matrix.os == 'macos-latest'
