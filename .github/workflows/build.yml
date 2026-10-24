@@ -73,9 +73,10 @@ jobs:
 
     - name: Create Installer (Windows)
       if: matrix.os == 'windows-latest'
+      shell: bash
       run: |
         choco install innosetup -y
-        "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" setup_script.iss
+        "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" setup_script.iss
 
     - name: Upload artifact (Windows)
       if: matrix.os == 'windows-latest'
