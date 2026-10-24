@@ -71,12 +71,20 @@ jobs:
         ls -la
         pyinstaller BiTTuRK_SunumAraci.spec --clean
 
+    - name: Create Installer (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        choco install innosetup -y
+        "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" setup_script.iss
+
     - name: Upload artifact (Windows)
       if: matrix.os == 'windows-latest'
       uses: actions/upload-artifact@v4
       with:
         name: BiTTuRK_SunumAraci-Windows
-        path: dist/BiTTuRK_SunumAraci.exe
+        path: |
+          dist/BiTTuRK_SunumAraci
+          BiTTuRK_SunumAraci_Setup.exe
 
     - name: Upload artifact (macOS)
       if: matrix.os == 'macos-latest'
