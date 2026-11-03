@@ -544,6 +544,7 @@ class YardimPenceresi(ctk.CTkToplevel):
         x = (screen_width - width) // 2
         y = (screen_height - height) // 2
         self.geometry(f"{width}x{height}+{x}+{y}")
+        self.update()
         self.grab_set()
         self.lift()
         self.focus_force()
