@@ -494,7 +494,7 @@ class YardimPenceresi(ctk.CTkToplevel):
             self.iconbitmap(str(icon_ico))
 
         # Scrollable frame oluştur
-        scroll_frame = ctk.CTkScrollableFrame(self, label_text="Yardım ve kullanım kılavuzu", corner_radius=8)
+        scroll_frame = ctk.CTkScrollableFrame(self, corner_radius=8)
         scroll_frame.pack(fill="both", expand=True, padx=20, pady=20)
         
         # Kullanım bölümü
@@ -523,131 +523,19 @@ class YardimPenceresi(ctk.CTkToplevel):
         ctk.CTkLabel(scroll_frame, text="• Windows: .exe dosyası ile çalıştırılır, Python gerekmez.", anchor="w").pack(anchor="w", padx=20)
         ctk.CTkLabel(scroll_frame, text="• Linux: Zip dosyasını açın, ./BiTTuRK_SunumAraci ile çalıştırın.", anchor="w").pack(anchor="w", padx=20)
         ctk.CTkLabel(scroll_frame, text="• macOS: Uygulama paketi indirin ve çalıştırın.", anchor="w").pack(anchor="w", padx=20)
-
-        # Pencere ikonunu ayarla
-        app_window = master.winfo_toplevel()
-        app_icon = getattr(app_window, "_window_icon", None)
-        if app_icon is not None:
-            self.iconphoto(True, app_icon)
-        icon_ico = getattr(app_window, "_window_icon_ico", None)
-        if icon_ico is not None:
-            self.iconbitmap(str(icon_ico))
-
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(1, weight=1)
-
-        heading = ctk.CTkLabel(
-            self,
-            text="Yardım ve kullanım kılavuzu",
-            image=app_icons.get_icon("help_notes", 22),
-            compound="left",
-            font=ctk.CTkFont(size=18, weight="bold"),
-            anchor="w",
-        )
-        heading.grid(row=0, column=0, sticky="ew", padx=20, pady=(16, 8))
-
-        pages = ctk.CTkTabview(self, corner_radius=8)
-        pages.grid(row=1, column=0, sticky="nsew", padx=16, pady=(0, 8))
-        pages.add("Kullanım")
-        pages.add("Özellikler")
-        pages.add("Windows")
-        pages.add("macOS")
-        pages.add("Linux")
-
-        # Sekmelere simge ekle
-        sekme_simgeleri = {
-            "Kullanım": "help",
-            "Özellikler": "tools",
-            "Windows": "settings",
-            "macOS": "vip",
-            "Linux": "settings",
-        }
-        for sekme_adi, simge_adi in sekme_simgeleri.items():
-            pages._segmented_button._buttons_dict[sekme_adi].configure(
-                image=app_icons.get_icon(simge_adi, 18),
-                compound="left",
-            )
-
-        def add_sections(tab_name, sections):
-            content_frame = ctk.CTkFrame(pages.tab(tab_name), fg_color="transparent")
-            content_frame.pack(fill="both", expand=True, padx=8, pady=8)
-            for section_title, section_text, icon_name in sections:
-                section_container = ctk.CTkFrame(content_frame, border_width=1, border_color=["#D1D5DB", "#43474B"], corner_radius=8)
-                section_container.pack(fill="x", padx=8, pady=(10, 4))
-                header_frame = ctk.CTkFrame(section_container, fg_color=["#F3F4F6", "#2D3748"], corner_radius=8)
-                header_frame.pack(fill="x", padx=1, pady=(1, 1))
-                ctk.CTkLabel(
-                    header_frame,
-                    text=section_title,
-                    image=app_icons.get_icon(icon_name, 16),
-                    compound="left",
-                    font=ctk.CTkFont(size=14, weight="bold"),
-                    anchor="w",
-                ).pack(fill="x", padx=12, pady=8)
-                content_text_frame = ctk.CTkFrame(section_container, fg_color="transparent")
-                content_text_frame.pack(fill="x", padx=12, pady=(0, 12))
-                ctk.CTkLabel(
-                    content_text_frame,
-                    text=section_text,
-                    font=ctk.CTkFont(size=12),
-                    justify="left",
-                    anchor="w",
-                ).pack(fill="x", padx=0, pady=0)
-
-        add_sections("Kullanım", [
-            ("Başlangıç", "Üstteki Film, Dizi, Müzik, Oyun ve Diğer sekmelerinden içerik türünü seçin. Alanları doldurdukça BBCode çıktısı sağ tarafta otomatik güncellenir.", "edit"),
-            ("Örnek metinler", "Gri görünen örnek metinler yer tutucudur; değiştirilmedikleri sürece sunum çıktısına eklenmez. Metin alanına odaklanıp kendi içeriğinizi yazın.", "edit"),
-            ("Görsel yükleme", "Bir görsel alanındaki Yükle düğmesine basıp dosya seçin. Uygulama Playwright Chromium üzerinden görseli ImgBB'ye yükler ve dönen bağlantıyı ilgili alana yerleştirir. Bu işlem internet bağlantısı gerektirir.", "upload"),
-            ("Çıktı ve taslak", "Kopyala düğmesi BBCode'u panoya alır. Kaydet, etkin sekmenin taslağını .txt dosyasına yazar; Yükle daha önce kaydedilmiş taslağı geri getirir. Temizle etkin sekmenin alanlarını sıfırlar.", "save"),
-            ("BitTurk sayfası", "Yükleme Sayfasına Git düğmesi BitTurk yükleme sayfasını varsayılan tarayıcıda açar. Site hesabı girişi tarayıcıda yapılır; uygulama parolanızı almaz veya kaydetmez.", "website"),
-            ("Medya seçenekleri", "Orijinal, Çift Dil ve Dublaj/Türkçe seçeneklerinden yalnızca biri seçilebilir. Altın ve Gümüş rozetleri de birbirini dışlar. 3D, Anonim ve 2X Sunum bağımsız seçeneklerdir. Premium rozetleri kilit açılana kadar devre dışıdır.", "settings"),
-            ("Tema", "Tema düğmesi açık ve koyu görünüm arasında geçiş yapar.", "moon"),
-        ])
-
-        add_sections("Özellikler", [
-            ("Film", "Film adı, afiş, teknik detay görseli, oyuncu görseli, konu, YouTube fragmanı, NFO/Info ve medya rozetleriyle forum BBCode'u oluşturur.", "film"),
-            ("Dizi", "Dizi adı, sezon/yayın bilgisi, görseller, konu, fragman, NFO/Info ve medya rozetleri için şablon üretir.", "series"),
-            ("Müzik", "Albüm adı, kapak, ses teknik bilgileri ve parça listesini kullanır. Checkbox satırları: Orijinal, Türkçe, Anonim; Altın, Gümüş, 2X Sunum.", "music"),
-            ("Oyun ve Diğer", "Oyun veya yazılım adı, afiş, tanıtım, fragman, minimum sistem gereksinimleri, NFO/Info ve medya rozetleriyle sunum hazırlar.", "game"),
-            ("Premium ve VIP", "Premium Kilidi eski BTRG erişim parolasıyla açılır. Kilit açılınca Altın, Gümüş, 2X seçenekleri etkinleşir ve VIP sekmesi görünür. VIP çıktısında XXX rozeti, sabit ekran görüntüsü rozeti, girilen ekran bağlantısına tıklanabilir metin, uyarı notu ve BTRG kaynak rozeti bulunur.", "vip"),
-            ("Görsel hizmetleri", "Alanlardaki otomatik görsel yükleme ImgBB'yi kullanır. BitTurk yükleme sayfası ise tarayıcıda açılır; bu iki işlem birbirinden ayrıdır.", "website"),
-        ])
-
-        add_sections("Windows", [
-            ("Kurulum", "BiTTuRK.NeT Sunum Hazırlama Aracı, Windows için çalıştırılabilir .exe dosyası olarak dağıtılır. İndirdiğiniz .exe dosyasını çift tıklayarak doğrudan çalıştırabilirsiniz. Python kurulumu gerekmez.", "settings"),
-            ("İlk çalıştırma", "İlk açılışta antivirüs yazılımınız bir uyarı gösterebilir. Bu, uygulamanın yeni imzalanmış olmasından kaynaklanır. Dosyayı güvenilir olarak işaretleyebilirsiniz.", "vip"),
-            ("Güncelleme", "Güncel sürümü BiTTuRK.NeT sitesinden indirebilirsiniz. Eski sürümü kapatıp yeni .exe dosyasını çalıştırın.", "tools"),
-            ("Sorun giderme", "Eğer uygulama açılmıyorsa, Yönetici olarak çalıştırmayı deneyin. Eğer görsel yükleme çalışmıyorsa, internet bağlantınızı kontrol edin.", "tools"),
-        ])
-
-        add_sections("macOS", [
-            ("Kurulum", "BiTTuRK.NeT Sunum Hazırlama Aracı, macOS için çalıştırılabilir .app dosyası olarak dağıtılır. İndirdiğiniz .app dosyasını Uygulamalar klasörüne sürükleyip bırakın ve Dock'tan başlatın.", "vip"),
-            ("Güvenlik uyarısı", "İlk açılışta macOS'un 'Güvenli olmayan uygulama' uyarısı gösterebilir. Sistem Tercihleri > Güvenlik ve Gizlilik bölümünden uygulamayı açmayı onaylayın.", "vip"),
-            ("Gatekeeper", "Gatekeeper kısıtlamaları nedeniyle, uygulamayı Terminal'den 'xattr -cr /Applications/BiTTuRK.app' komutuyla karantinadan kaldırmanız gerekebilir.", "settings"),
-            ("İzinler", "Görsel yükleme için internet erişimi gerekir. İlk kullanımda ağ izni istenebilir.", "website"),
-        ])
-
-        add_sections("Linux", [
-            ("Kurulum", "BiTTuRK.NeT Sunum Hazırlama Aracı, Linux için çalıştırılabilir ikili dosya olarak dağıtılır. İndirdiğiniz dosyaya çalıştırma izni verin (chmod +x BiTTuRK) ve ./BiTTuRK komutuyla başlatın.", "settings"),
-            ("Bağımlılıklar", "Uygulama kendi içinde tüm kütüphaneleri içerir. Ek Python kurulumu gerekmez. Sadece sistem düzeyinde temel kütüphaneler (libc, libstdc++ vb.) olmalıdır.", "details"),
-            ("Sistem gereksinimleri", "64-bit Linux dağıtımı gerekir. Çoğu modern dağıtımda (Ubuntu 20.04+, Fedora 35+, Debian 11+, Arch Linux) çalışır.", "settings"),
-            ("Sorun giderme", "Eğer uygulama açılmıyorsa, libstdc++6 ve diğer temel kütüphanelerin kurulu olduğunu kontrol edin. Görsel yükleme için internet bağlantısı gerekir.", "tools"),
-        ])
-
+        
         ctk.CTkButton(
             self,
             text="Kapat",
-            image=app_icons.get_icon("close", 16),
-            compound="left",
             command=self.destroy,
             width=120,
             height=32,
-        ).grid(row=2, column=0, pady=(0, 12))
-
-        # Pencereyi ekranın tam ortasına yerleştir
+        ).pack(pady=20)
+        
+        # Pencereyi ortala
         self.update_idletasks()
-        width = 1260
-        height = 880
+        width = 900
+        height = 600
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         x = (screen_width - width) // 2
@@ -656,3 +544,4 @@ class YardimPenceresi(ctk.CTkToplevel):
         self.grab_set()
         self.lift()
         self.focus_force()
+
