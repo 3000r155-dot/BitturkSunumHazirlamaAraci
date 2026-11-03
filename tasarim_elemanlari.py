@@ -202,16 +202,47 @@ def create_layout_structure(parent):
 def tam_otomatik_imgbb_yukle_worker(girdi_kutusu, update_callback, dosya_yolu):
     """Playwright otomasyon mekanizması üzerinden saf kaynak ayıklayan arka plan işçisi."""
     try:
+        import platform
+        
+        # Windows'ta varsayılan tarayıcıyı bul
+        def get_default_browser():
+            if platform.system() == "Windows":
+                try:
+                    import winreg
+                    with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice") as key:
+                        prog_id = winreg.QueryValueEx(key, "ProgId")[0]
+                        if "Chrome" in prog_id.lower():
+                            return "chrome"
+                        elif "Edge" in prog_id.lower() or "MSEdge" in prog_id:
+                            return "msedge"
+                except:
+                    pass
+            return None
+        
+        default_browser = get_default_browser()
+        
         with sync_playwright() as p:
-            # Sistem Chrome veya Edge kullan
-            try:
-                browser = p.chromium.launch(channel="chrome", headless=True)
-            except:
+            browser = None
+            # Varsayılan tarayıcıya göre başlat (sadece Chrome ve Edge - ikisi de Chromium tabanlı)
+            if default_browser == "chrome":
+                try:
+                    browser = p.chromium.launch(channel="chrome", headless=True)
+                except:
+                    browser = p.chromium.launch(headless=True)
+            elif default_browser == "msedge":
                 try:
                     browser = p.chromium.launch(channel="msedge", headless=True)
                 except:
-                    # İkisi de yoksa bundled chromium kullan
                     browser = p.chromium.launch(headless=True)
+            else:
+                # Varsayılan bulunamadıysa önce Chrome dene, sonra Edge, sonra bundled chromium
+                try:
+                    browser = p.chromium.launch(channel="chrome", headless=True)
+                except:
+                    try:
+                        browser = p.chromium.launch(channel="msedge", headless=True)
+                    except:
+                        browser = p.chromium.launch(headless=True)
             
             context = browser.new_context(viewport={"width": 1280, "height": 720})
             page = context.new_page()
