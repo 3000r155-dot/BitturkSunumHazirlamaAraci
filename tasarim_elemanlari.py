@@ -70,13 +70,13 @@ def show_themed_message(parent, title, message, level="warning"):
         compound="left",
         font=ctk.CTkFont(size=14, weight="bold"),
         text_color=[accent, "#F2C879" if level == "warning" else "#F29B9B"],
-        anchor="w",
+        anchor="center",
     ).pack(fill="x", padx=14, pady=(12, 6))
     ctk.CTkLabel(
         panel,
         text=message,
         justify="left",
-        anchor="w",
+        anchor="center",
         wraplength=390,
         font=ctk.CTkFont(size=12),
     ).pack(fill="x", padx=14, pady=(0, 12))
@@ -129,14 +129,14 @@ def create_layout_structure(parent):
     bbcode_container.pack(fill="both", expand=True, pady=(0, 4))
     
     lbl_bbcode_title = ctk.CTkLabel(bbcode_container, text="Üretilen Saf BBCode Çıktısı", image=app_icons.get_icon("output", 17), compound="left", font=ctk.CTkFont(size=12, weight="bold"), text_color=["#4B5563", "#9CA3AF"])
-    lbl_bbcode_title.pack(anchor="w", pady=(6, 2), padx=6)
+    lbl_bbcode_title.pack(anchor="center", pady=(6, 2), padx=6)
     txt_output = ctk.CTkTextbox(bbcode_container, font=ctk.CTkFont(family="Courier", size=13), fg_color="transparent")
     txt_output.pack(padx=8, pady=(2, 8), fill="both", expand=True)
 
     # ANA EKRANDA %100 EN ÜSTTE BELİRECEK HAREKETLİ PANEL GÖSTERGESİ
     ANA_YÜKLEME_GÖSTERGESI = ctk.CTkFrame(ANA_PENCERE_REF, fg_color=["#EAEAEA", "#1E1E1E"], corner_radius=10, border_width=2, border_color="#1F6AA5")
     
-    lbl_ana_load = ctk.CTkLabel(ANA_YÜKLEME_GÖSTERGESI, text="Görsel Sunucuya Yükleniyor...", image=app_icons.get_icon("loading", 18), compound="left", font=ctk.CTkFont(size=13, weight="bold"))
+    lbl_ana_load = ctk.CTkLabel(ANA_YÜKLEME_GÖSTERGESI, text="Gorsel Sunucuya Yukleniyor...", image=app_icons.get_icon("loading", 18), compound="left", font=ctk.CTkFont(size=13, weight="bold"))
     lbl_ana_load.pack(padx=40, pady=(20, 10))
     
     ANALOG_PROGRESS_BAR = ctk.CTkProgressBar(ANA_YÜKLEME_GÖSTERGESI, width=220, mode="indefinite", progress_color="#1F6AA5")
@@ -279,7 +279,7 @@ def tam_otomatik_imgbb_yukle_worker(girdi_kutusu, update_callback, dosya_yolu):
                 10,
                 lambda text=hata_metni: show_themed_message(
                     ANA_PENCERE_REF,
-                    "Görsel Yükleme Hatası",
+                    "Gorsel Yukleme Hatası",
                     f"Otomatik yükleme motorunda hata oluştu:\n{text}",
                     level="error",
                 ),
@@ -293,7 +293,7 @@ def tam_otomatik_imgbb_yukle_worker(girdi_kutusu, update_callback, dosya_yolu):
 
 def tam_otomatik_imgbb_yukle(girdi_kutusu, update_callback):
     """Ana ekran üzerinde kilitleri çözen asenkron tetikleyici."""
-    dosya_yolu = filedialog.askopenfilename(title="Yüklenecek Görseli Seçin", filetypes=[("Resim Dosyaları", "*.png *.jpg *.jpeg *.gif *.bmp")])
+    dosya_yolu = filedialog.askopenfilename(title="Yuklenecek Gorseli Seçin", filetypes=[("Resim Dosyaları", "*.png *.jpg *.jpeg *.gif *.bmp")])
     if not dosya_yolu: return
     
     if ANA_YÜKLEME_GÖSTERGESI:
@@ -308,7 +308,7 @@ def ekle_alt_butonlar(app_instance, parent, txt_output, temizle_func, kaydet_fun
     buton_container = ctk.CTkFrame(parent, border_width=1, border_color=["#D1D5DB", "#43474B"])
     buton_container.pack(side="top", fill="x", pady=(4, 5), padx=0, expand=False)
     lbl_btn_title = ctk.CTkLabel(buton_container, text="Sunum İşlemleri & Taslak Yönetimi", image=app_icons.get_icon("tools", 16), compound="left", font=ctk.CTkFont(size=11, weight="bold"), text_color=["#4B5563", "#9CA3AF"])
-    lbl_btn_title.pack(anchor="w", pady=(4, 1), padx=4)
+    lbl_btn_title.pack(anchor="center", pady=(4, 1), padx=4)
     btn_frame = ctk.CTkFrame(buton_container, fg_color="transparent")
     btn_frame.pack(fill="x", pady=(2, 6), padx=6)
     
@@ -331,8 +331,8 @@ def ekle_alt_butonlar(app_instance, parent, txt_output, temizle_func, kaydet_fun
         ("Temizle", "clear", zincirleme_temizle),
         ("Kopyala", "copy", kopyala_panoya),
         ("Kaydet", "save", kaydet_func),
-        ("Yükle", "load", yukle_func),
-        ("Yükleme Sayfasına Git", "upload", lambda: webbrowser.open(ayarlar.MUHURLU_URL_DEPOLOSU["YUKLEME_SAYFASI"])),
+        ("Yukle", "load", yukle_func),
+        ("Yukleme Sayfasına Git", "upload", lambda: webbrowser.open(ayarlar.MUHURLU_URL_DEPOLOSU["YUKLEME_SAYFASI"])),
     ]
     for text, icon_name, command in actions:
         button = ctk.CTkButton(
@@ -343,7 +343,7 @@ def ekle_alt_butonlar(app_instance, parent, txt_output, temizle_func, kaydet_fun
             font=ctk.CTkFont(size=11, weight="bold"),
             height=32,
             command=command,
-            fg_color="green" if text == "Yükleme Sayfasına Git" else None,
+            fg_color="green" if text == "Yukleme Sayfasına Git" else None,
         )
         button.pack(side="left", fill="both", expand=True, padx=2)
 
@@ -352,13 +352,13 @@ def ekle_girdi(parent, label_text, is_textbox=False, height=60, has_upload=False
     tekli_container.pack(fill="x", pady=3, padx=2)
     icon_by_label = (
         ("Afiş", "poster"), ("Ekran", "screenshot"), ("Detay", "details"), ("Oyuncu", "cast"),
-        ("Konu", "synopsis"), ("Tanıtım", "promo"), ("Fragman", "play"), ("Albüm", "album"),
+        ("Konu", "synopsis"), ("Tanitim", "promo"), ("Fragman", "play"), ("Album", "album"),
         ("Parça", "music"), ("Sistem", "settings"), ("NFO", "document"), ("Info", "document"),
         ("Sunum", "film"), ("Film", "film"), ("Dizi", "series"), ("Oyun", "game"),
-        ("Adı", "title"),
+        ("Adi", "title"),
     )
     icon_name = next((name for keyword, name in icon_by_label if keyword.casefold() in label_text.casefold()), "edit")
-    lbl = ctk.CTkLabel(tekli_container, text=label_text, image=app_icons.get_icon(icon_name, 15), compound="left", font=ctk.CTkFont(size=11, weight="bold"), anchor="w")
+    lbl = ctk.CTkLabel(tekli_container, text=label_text, image=app_icons.get_icon(icon_name, 15), compound="left", font=ctk.CTkFont(size=11, weight="bold"), anchor="center")
     lbl.pack(fill="x", pady=(3, 1), padx=4)
     varsayilan_fg = ["#F9F9FA", "#343638"] if ctk.get_appearance_mode() == "Dark" else ["#F9F9FA", "#F9F9FA"]
 
@@ -384,7 +384,7 @@ def ekle_girdi(parent, label_text, is_textbox=False, height=60, has_upload=False
             f.pack(fill="x", pady=(1, 4), padx=6)
             girdi = ctk.CTkEntry(f, placeholder_text=ornek, font=ctk.CTkFont(size=11))
             girdi.pack(side="left", fill="x", expand=True, padx=(0, 4))
-            btn = ctk.CTkButton(f, text="Yükle", image=app_icons.get_icon("upload", 14), compound="left", width=76, height=24, command=lambda: tam_otomatik_imgbb_yukle(girdi, lambda: sarmalanmis_callback(None, girdi)))
+            btn = ctk.CTkButton(f, text="Yukle", image=app_icons.get_icon("upload", 14), compound="left", width=76, height=24, command=lambda: tam_otomatik_imgbb_yukle(girdi, lambda: sarmalanmis_callback(None, girdi)))
             btn.pack(side="right")
         else:
             girdi = ctk.CTkEntry(tekli_container, placeholder_text=ornek, font=ctk.CTkFont(size=11))
@@ -484,45 +484,48 @@ class YardimPenceresi(ctk.CTkToplevel):
         self.transient(master)
         self.resizable(False, False)
         
-        # Pencere ikonunu ayarla
-        app_window = master.winfo_toplevel()
-        app_icon = getattr(app_window, "_window_icon", None)
-        if app_icon is not None:
-            self.iconphoto(True, app_icon)
-        icon_ico = getattr(app_window, "_window_icon_ico", None)
-        if icon_ico is not None:
-            self.iconbitmap(str(icon_ico))
+        # Pencere ikonunu ayarla (hata önleme ile)
+        try:
+            app_window = master.winfo_toplevel()
+            app_icon = getattr(app_window, "_window_icon", None)
+            if app_icon is not None:
+                self.iconphoto(True, app_icon)
+            icon_ico = getattr(app_window, "_window_icon_ico", None)
+            if icon_ico is not None:
+                self.iconbitmap(str(icon_ico))
+        except:
+            pass
 
         # Scrollable frame oluştur
         scroll_frame = ctk.CTkScrollableFrame(self, corner_radius=8)
         scroll_frame.pack(fill="both", expand=True, padx=20, pady=20)
         
         # Kullanım bölümü
-        ctk.CTkLabel(scroll_frame, text="Kullanım", font=ctk.CTkFont(size=16, weight="bold")).pack(anchor="w", pady=(0, 10))
-        ctk.CTkLabel(scroll_frame, text="• Üstteki Film, Dizi, Müzik, Oyun ve Diğer sekmelerinden içerik türünü seçin.", anchor="w").pack(anchor="w", padx=20)
-        ctk.CTkLabel(scroll_frame, text="• Alanları doldurdukça BBCode çıktısı sağ tarafta otomatik güncellenir.", anchor="w").pack(anchor="w", padx=20)
-        ctk.CTkLabel(scroll_frame, text="• Gri görünen örnek metinler yer tutucudur; değiştirilmedikleri sürece sunum çıktısına eklenmez.", anchor="w").pack(anchor="w", padx=20)
-        ctk.CTkLabel(scroll_frame, text="• Görsel yükleme: ImgBB'ye yükler ve linki ilgili alana yerleştirir.", anchor="w").pack(anchor="w", padx=20)
-        ctk.CTkLabel(scroll_frame, text="• Kopyala, Kaydet, Yükle ve Temizle düğmeleri: BBCode'u yönetir.", anchor="w").pack(anchor="w", padx=20)
-        ctk.CTkLabel(scroll_frame, text="• BitTurk yükleme sayfası tarayıcıda açılır.", anchor="w").pack(anchor="w", padx=20)
+        ctk.CTkLabel(scroll_frame, text="Kullanım", font=ctk.CTkFont(size=16, weight="bold")).pack(anchor="center", pady=(0, 10))
+        ctk.CTkLabel(scroll_frame, text="• Ustteki Film, Dizi, Muzik, Oyun ve Diger sekmelerinden içerik türünü seçin.", anchor="center").pack(anchor="center", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Alanlari doldurdukça BBCode ciktisi sağ tarafta otomatik guncellenir.", anchor="center").pack(anchor="center", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Gri görünen örnek metinler yer tutucudur; değiştirilmedikleri sürece sunum ciktisina eklenmez.", anchor="center").pack(anchor="center", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Gorsel yükleme: ImgBB'ye yukler ve linki ilgili alana yerlestirir.", anchor="center").pack(anchor="center", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Kopyala, Kaydet, Yukle ve Temizle düğmeleri: BBCode'u yönetir.", anchor="center").pack(anchor="center", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• BitTurk yükleme sayfası tarayicida acilir.", anchor="center").pack(anchor="center", padx=20)
         
         ctk.CTkSeparator(scroll_frame, orientation="horizontal").pack(fill="x", pady=20)
         
-        # Özellikler bölümü
-        ctk.CTkLabel(scroll_frame, text="Özellikler", font=ctk.CTkFont(size=16, weight="bold")).pack(anchor="w", pady=(0, 10))
-        ctk.CTkLabel(scroll_frame, text="• Film: Ad, afiş, detay, oyuncu, konu, fragman, NFO/Info ve medya rozetleri.", anchor="w").pack(anchor="w", padx=20)
-        ctk.CTkLabel(scroll_frame, text="• Dizi: Sezon/yayın bilgisi, görseller, konu, fragman, NFO/Info.", anchor="w").pack(anchor="w", padx=20)
-        ctk.CTkLabel(scroll_frame, text="• Müzik: Albüm, kapak, teknik bilgiler, parça listesi.", anchor="w").pack(anchor="w", padx=20)
-        ctk.CTkLabel(scroll_frame, text="• Oyun: Ad, afiş, tanıtım, fragman, sistem gereksinimleri.", anchor="w").pack(anchor="w", padx=20)
-        ctk.CTkLabel(scroll_frame, text="• Premium: Kilidi eski BTRG parolasıyla açılır. VIP sekmesi görünür.", anchor="w").pack(anchor="w", padx=20)
+        # Ozellikler bölümü
+        ctk.CTkLabel(scroll_frame, text="Ozellikler", font=ctk.CTkFont(size=16, weight="bold")).pack(anchor="center", pady=(0, 10))
+        ctk.CTkLabel(scroll_frame, text="• Film: Ad, afiş, detay, oyuncu, konu, fragman, NFO/Info ve medya rozetleri.", anchor="center").pack(anchor="center", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Dizi: Sezon/yayın bilgisi, görseller, konu, fragman, NFO/Info.", anchor="center").pack(anchor="center", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Muzik: Album, kapak, teknik bilgiler, parca listesi.", anchor="center").pack(anchor="center", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Oyun: Ad, afiş, tanıtım, fragman, sistem gereksinimleri.", anchor="center").pack(anchor="center", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Premium: Kilidi eski BTRG parolasıyla acilir. VIP sekmesi görünür.", anchor="center").pack(anchor="center", padx=20)
         
         ctk.CTkSeparator(scroll_frame, orientation="horizontal").pack(fill="x", pady=20)
         
         # Platform bölümü
-        ctk.CTkLabel(scroll_frame, text="Platformlar", font=ctk.CTkFont(size=16, weight="bold")).pack(anchor="w", pady=(0, 10))
-        ctk.CTkLabel(scroll_frame, text="• Windows: .exe dosyası ile çalıştırılır, Python gerekmez.", anchor="w").pack(anchor="w", padx=20)
-        ctk.CTkLabel(scroll_frame, text="• Linux: Zip dosyasını açın, ./BiTTuRK_SunumAraci ile çalıştırın.", anchor="w").pack(anchor="w", padx=20)
-        ctk.CTkLabel(scroll_frame, text="• macOS: Uygulama paketi indirin ve çalıştırın.", anchor="w").pack(anchor="w", padx=20)
+        ctk.CTkLabel(scroll_frame, text="Platformlar", font=ctk.CTkFont(size=16, weight="bold")).pack(anchor="center", pady=(0, 10))
+        ctk.CTkLabel(scroll_frame, text="• Windows: .exe dosyası ile çalıştırılır, Python gerekmez.", anchor="center").pack(anchor="center", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Linux: Zip dosyasını acin, ./BiTTuRK_SunumAraci ile calistirin.", anchor="center").pack(anchor="center", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• macOS: Uygulama paketi indirin ve calistirin.", anchor="center").pack(anchor="center", padx=20)
         
         ctk.CTkButton(
             self,
