@@ -480,9 +480,49 @@ class YardimPenceresi(ctk.CTkToplevel):
     def __init__(self, master=None, widget_haritasi=None):
         super().__init__(master)
         self.title("❓ BiTTuRK.NeT Yardım")
-        self.geometry("1260x880")
+        self.geometry("1000x700")
         self.transient(master)
         self.resizable(False, False)
+        
+        # Pencere ikonunu ayarla
+        app_window = master.winfo_toplevel()
+        app_icon = getattr(app_window, "_window_icon", None)
+        if app_icon is not None:
+            self.iconphoto(True, app_icon)
+        icon_ico = getattr(app_window, "_window_icon_ico", None)
+        if icon_ico is not None:
+            self.iconbitmap(str(icon_ico))
+
+        # Scrollable frame oluştur
+        scroll_frame = ctk.CTkScrollableFrame(self, label_text="Yardım ve kullanım kılavuzu", corner_radius=8)
+        scroll_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Kullanım bölümü
+        ctk.CTkLabel(scroll_frame, text="Kullanım", font=ctk.CTkFont(size=16, weight="bold")).pack(anchor="w", pady=(0, 10))
+        ctk.CTkLabel(scroll_frame, text="• Üstteki Film, Dizi, Müzik, Oyun ve Diğer sekmelerinden içerik türünü seçin.", anchor="w").pack(anchor="w", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Alanları doldurdukça BBCode çıktısı sağ tarafta otomatik güncellenir.", anchor="w").pack(anchor="w", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Gri görünen örnek metinler yer tutucudur; değiştirilmedikleri sürece sunum çıktısına eklenmez.", anchor="w").pack(anchor="w", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Görsel yükleme: ImgBB'ye yükler ve linki ilgili alana yerleştirir.", anchor="w").pack(anchor="w", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Kopyala, Kaydet, Yükle ve Temizle düğmeleri: BBCode'u yönetir.", anchor="w").pack(anchor="w", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• BitTurk yükleme sayfası tarayıcıda açılır.", anchor="w").pack(anchor="w", padx=20)
+        
+        ctk.CTkSeparator(scroll_frame, orientation="horizontal").pack(fill="x", pady=20)
+        
+        # Özellikler bölümü
+        ctk.CTkLabel(scroll_frame, text="Özellikler", font=ctk.CTkFont(size=16, weight="bold")).pack(anchor="w", pady=(0, 10))
+        ctk.CTkLabel(scroll_frame, text="• Film: Ad, afiş, detay, oyuncu, konu, fragman, NFO/Info ve medya rozetleri.", anchor="w").pack(anchor="w", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Dizi: Sezon/yayın bilgisi, görseller, konu, fragman, NFO/Info.", anchor="w").pack(anchor="w", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Müzik: Albüm, kapak, teknik bilgiler, parça listesi.", anchor="w").pack(anchor="w", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Oyun: Ad, afiş, tanıtım, fragman, sistem gereksinimleri.", anchor="w").pack(anchor="w", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Premium: Kilidi eski BTRG parolasıyla açılır. VIP sekmesi görünür.", anchor="w").pack(anchor="w", padx=20)
+        
+        ctk.CTkSeparator(scroll_frame, orientation="horizontal").pack(fill="x", pady=20)
+        
+        # Platform bölümü
+        ctk.CTkLabel(scroll_frame, text="Platformlar", font=ctk.CTkFont(size=16, weight="bold")).pack(anchor="w", pady=(0, 10))
+        ctk.CTkLabel(scroll_frame, text="• Windows: .exe dosyası ile çalıştırılır, Python gerekmez.", anchor="w").pack(anchor="w", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• Linux: Zip dosyasını açın, ./BiTTuRK_SunumAraci ile çalıştırın.", anchor="w").pack(anchor="w", padx=20)
+        ctk.CTkLabel(scroll_frame, text="• macOS: Uygulama paketi indirin ve çalıştırın.", anchor="w").pack(anchor="w", padx=20)
 
         # Pencere ikonunu ayarla
         app_window = master.winfo_toplevel()
