@@ -29,17 +29,31 @@ class BiTTuRKMuadiliApp(ctk.CTk):
         resource_root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
         icon_png = resource_root / "assets" / "app_icon.png"
         self._window_icon_ico = resource_root / "assets" / "app_icon.ico"
+        
+        # Ikon dosyasinin varligini kontrol et
+        print(f"Resource root: {resource_root}")
+        print(f"Icon PNG exists: {icon_png.exists()}")
+        print(f"Icon ICO exists: {self._window_icon_ico.exists()}")
+        
         try:
             with Image.open(icon_png) as icon_image:
                 self._window_icon = ImageTk.PhotoImage(icon_image)
             self.iconphoto(True, self._window_icon)
+            print("Ikon basariyla yuklendi")
         except Exception as e:
             print(f"Ikon yukleme hatasi: {e}")
+        
         if sys.platform.startswith("win"):
             try:
                 self.iconbitmap(str(self._window_icon_ico))
             except Exception as e:
                 print(f"Windows ikon hatasi: {e}")
+        elif sys.platform.startswith("linux"):
+            # Linux icin alternatif ikon yukleme
+            try:
+                self.iconbitmap(str(icon_png))
+            except Exception as e:
+                print(f"Linux ikon hatasi: {e}")
         
         # --- TÜM BUTONLARIN TAŞMADAN SIĞDIĞI İDEAL AÇILIŞ BOYUTU ---
         self.ideal_genislik = 1260

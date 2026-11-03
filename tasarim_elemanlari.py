@@ -535,14 +535,27 @@ class YardimPenceresi(ctk.CTkToplevel):
             height=32,
         ).pack(pady=20)
         
-        # Pencereyi ortala
+        # Pencereyi ortala - master pencerenin konumunu kullan
         self.update_idletasks()
-        width = 900
-        height = 600
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-        x = (screen_width - width) // 2
-        y = (screen_height - height) // 2
+        if master:
+            master.update_idletasks()
+            master_x = master.winfo_x()
+            master_y = master.winfo_y()
+            master_width = master.winfo_width()
+            master_height = master.winfo_height()
+            
+            width = 900
+            height = 600
+            x = master_x + (master_width - width) // 2
+            y = master_y + (master_height - height) // 2
+        else:
+            width = 900
+            height = 600
+            screen_width = self.winfo_screenwidth()
+            screen_height = self.winfo_screenheight()
+            x = (screen_width - width) // 2
+            y = (screen_height - height) // 2
+        
         self.geometry(f"{width}x{height}+{x}+{y}")
         self.update()
         self.grab_set()
