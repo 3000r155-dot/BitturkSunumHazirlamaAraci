@@ -3,6 +3,7 @@ import webbrowser
 from tkinter import filedialog
 import json
 import re
+# -*- coding: utf-8 -*-
 from playwright.sync_api import sync_playwright
 import ayarlar
 import requests

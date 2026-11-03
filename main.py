@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import customtkinter as ctk
 from tkinter import filedialog
 from pathlib import Path
