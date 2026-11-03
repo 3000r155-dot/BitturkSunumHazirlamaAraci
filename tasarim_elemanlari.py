@@ -551,7 +551,6 @@ class YardimPenceresi(ctk.CTkToplevel):
                     text=section_text,
                     font=ctk.CTkFont(size=12),
                     justify="left",
-                    wraplength=1100,
                     anchor="w",
                 ).pack(fill="x", padx=0, pady=0)
 
