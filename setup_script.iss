@@ -1,7 +1,8 @@
 [Setup]
 AppName=BiTTuRK.NeT Sunum Hazırlama Aracı 5.0
 AppPublisher=Mcilve
-AppVersion=
+AppVerName=BiTTuRK.NeT Sunum Hazırlama Aracı 5.0
+AppVersion=5.0
 DefaultDirName={pf}\BiTTuRK_SunumAraci
 DefaultGroupName=BiTTuRK.NeT Sunum Hazırlama Aracı
 OutputBaseFilename=BiTTuRK_SunumAraci_Setup
